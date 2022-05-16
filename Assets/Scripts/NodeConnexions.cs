@@ -25,7 +25,10 @@ public class NodeConnexions : MonoBehaviour {
 	}
 
 	public void UpdateConnexionsMesh(Node from, Node to) {
-		connexions[GetConnexionId(from, to)].UpdateMesh();
+		string id = GetConnexionId(from, to);
+		if (connexions.ContainsKey(id)) {
+			connexions[id].UpdateMesh();
+		}
 	}
 
 	private string GetConnexionId(Node from, Node to) {

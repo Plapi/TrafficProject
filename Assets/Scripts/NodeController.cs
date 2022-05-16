@@ -11,6 +11,7 @@ public class NodeController : MonoBehaviour {
 	[SerializeField] private NodeConnexions nodeConnexions = default;
 
 	private readonly List<Node> nodes = new();
+	private readonly Node[] lastNodes = new Node[3];
 
 	private Node currentNode;
 
@@ -22,32 +23,30 @@ public class NodeController : MonoBehaviour {
 
 		if (currentNode != null) {
 			currentNode.transform.position = point;
-
-			Vector3 dir = nodes[^1].transform.position - currentNode.transform.position;
-			Vector3 left = Vector3.Cross(dir, Vector3.up).normalized;
-			nodes[^1].LeftPoint.position = nodes[^1].transform.position + left * HALF_WIDTH;
-			nodes[^1].RightPoint.position = nodes[^1].transform.position - left * HALF_WIDTH;
-
-			currentNode.LeftPoint.position = currentNode.transform.position + left * HALF_WIDTH;
-			currentNode.RightPoint.position = currentNode.transform.position - left * HALF_WIDTH;
-
-			nodeConnexions.UpdateConnexionsMesh(nodes[^1], currentNode);
+			UpdateLastNodes();
 		}
 
 		if (Input.GetMouseButtonUp(0)) {
 			Node newNode = NewNode(point);
 
 			if (currentNode == null) {
-				currentNode = newNode;
+				lastNodes[0] = currentNode = newNode;
 				nodes.Add(currentNode);
-				newNode = NewNode(point);
+				lastNodes[1] = newNode = NewNode(point);
 			} else {
 				nodes.Add(currentNode);
+				if (lastNodes[2] != null) {
+					for (int i = 0; i < lastNodes.Length - 1; i++) {
+						lastNodes[i] = lastNodes[i + 1];
+					}
+				}
+				lastNodes[2] = newNode;
 			}
-			
+
 			nodeConnexions.AddConnexion(currentNode, newNode);
 
 			currentNode = newNode;
+			UpdateLastNodes();
 			return;
 		}
 
@@ -57,8 +56,66 @@ public class NodeController : MonoBehaviour {
 			if (!nodeConnexions.HasConnexions(nodes[^1])) {
 				Destroy(nodes[^1].gameObject);
 				nodes.RemoveAt(nodes.Count - 1);
+			} else {
+				Update1LastNode();
+			}
+			for (int i = 0; i < lastNodes.Length; i++) {
+				lastNodes[i] = null;
 			}
 		}
+	}
+
+	private void UpdateLastNodes() {
+		if (lastNodes[2] == null) {
+			Update2LastNodes();
+		} else {
+			Update3LastNodes();
+		}
+	}
+
+	private void Update1LastNode() {
+		Vector3 dir = lastNodes[0].transform.position - lastNodes[1].transform.position;
+		Vector3 left = Vector3.Cross(dir, Vector3.up).normalized;
+		lastNodes[1].LeftPoint.position = lastNodes[1].transform.position + left * HALF_WIDTH;
+		lastNodes[1].RightPoint.position = lastNodes[1].transform.position - left * HALF_WIDTH;
+		nodeConnexions.UpdateConnexionsMesh(lastNodes[0], lastNodes[1]);
+	}
+
+	private void Update2LastNodes() {
+		Vector3 dir = lastNodes[0].transform.position - lastNodes[1].transform.position;
+		Vector3 left = Vector3.Cross(dir, Vector3.up).normalized;
+
+		lastNodes[0].LeftPoint.position = lastNodes[0].transform.position + left * HALF_WIDTH;
+		lastNodes[0].RightPoint.position = lastNodes[0].transform.position - left * HALF_WIDTH;
+
+		lastNodes[1].LeftPoint.position = lastNodes[1].transform.position + left * HALF_WIDTH;
+		lastNodes[1].RightPoint.position = lastNodes[1].transform.position - left * HALF_WIDTH;
+
+		nodeConnexions.UpdateConnexionsMesh(lastNodes[0], lastNodes[1]);
+	}
+
+	private void Update3LastNodes() {
+		Vector3 left01 = Vector3.Cross(lastNodes[0].transform.position - lastNodes[1].transform.position, Vector3.up).normalized;
+		Vector3 dir01Left = (lastNodes[1].transform.position + left01 * HALF_WIDTH - lastNodes[0].LeftPoint.position).normalized;
+		Vector3 dir01Right = (lastNodes[1].transform.position - left01 * HALF_WIDTH - lastNodes[0].RightPoint.position).normalized;
+
+		Vector3 left21 = Vector3.Cross(lastNodes[1].transform.position - lastNodes[2].transform.position, Vector3.up).normalized;
+		lastNodes[2].LeftPoint.position = lastNodes[2].transform.position + left21 * HALF_WIDTH;
+		lastNodes[2].RightPoint.position = lastNodes[2].transform.position - left21 * HALF_WIDTH;
+
+		Vector3 dir21Left = (lastNodes[1].transform.position + left21 * HALF_WIDTH - lastNodes[2].LeftPoint.position).normalized;
+		Vector3 dir21Right = (lastNodes[1].transform.position - left21 * HALF_WIDTH - lastNodes[2].RightPoint.position).normalized;
+
+		if (Math3d.LineLineIntersection(out Vector3 intersectionLeft, lastNodes[0].LeftPoint.position, dir01Left, lastNodes[2].LeftPoint.position, dir21Left)) {
+			lastNodes[1].LeftPoint.position = intersectionLeft;
+		}
+
+		if (Math3d.LineLineIntersection(out Vector3 intersectionRight, lastNodes[0].RightPoint.position, dir01Right, lastNodes[2].RightPoint.position, dir21Right)) {
+			lastNodes[1].RightPoint.position = intersectionRight;
+		}
+
+		nodeConnexions.UpdateConnexionsMesh(lastNodes[0], lastNodes[1]);
+		nodeConnexions.UpdateConnexionsMesh(lastNodes[1], lastNodes[2]);
 	}
 
 	private Node NewNode(Vector3 point) {

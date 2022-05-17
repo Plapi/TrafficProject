@@ -19,7 +19,7 @@ public class NodeController : MonoBehaviour {
 		if (lastNodes[0] != null) {
 			lastNodes[0].transform.position = point;
 
-			if (Input.GetMouseButtonUp(1)) {
+			if (Input.GetMouseButtonDown(1)) {
 				lastNodes[0].RemoveConnexion(lastNodes[1]);
 				Destroy(lastNodes[0].gameObject);
 				if (lastNodes[1].ConnexionsCount == 0) {
@@ -37,7 +37,7 @@ public class NodeController : MonoBehaviour {
 			lastNodes[1].UpdateMesh();
 		}
 
-		if (Input.GetMouseButtonUp(0)) {
+		if (Input.GetMouseButtonDown(0)) {
 			if (lastNodes[0] == null) {
 				lastNodes[1] = NewNode(point);
 			} else {

@@ -168,7 +168,7 @@ public static class Utils {
 	}
 
 	public static Vector3 MidPoint(Vector3 p0, Vector3 p1) {
-		return new Vector3(p0.x + (p1.x - p0.x) / 2, p0.y + (p1.y - p0.y) / 2, p0.z + (p1.z - p0.z) / 2);
+		return Vector3.Lerp(p0, p1, 0.5f);
 	}
 
 	public static Vector3 BisectVector(Vector3 p0, Vector3 p1, Vector3 p2) {
@@ -178,6 +178,12 @@ public static class Utils {
 		Vector3 v3D = p0 + dir2 * dir0.magnitude / (dir0.magnitude + dir1.magnitude);
 		Vector3 v3 = v3D - p1;
 		return v3;
+	}
+
+	public static void PerpendicularPoints(Vector3 from, Vector3 to, out Vector3 p0, out Vector3 p1, float distance) {
+		Vector3 cross = Vector3.Cross(to - from, Vector3.up).normalized;
+		p0 = from + cross * distance;
+		p1 = from - cross * distance;
 	}
 
 	public static void Delay(MonoBehaviour behaviour, float delayTime, Action onComplete) {

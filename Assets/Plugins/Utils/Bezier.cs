@@ -23,9 +23,18 @@ public static class Bezier {
 			t * t * p2;
 	}
 
+	public static List<Vector3> GetPoints(Vector3 p0, Vector3 p1, Vector3 p2, int passes = 10) {
+		List<Vector3> bPoints = new();
+		int add = 100 / passes;
+		for (int i = 0; i <= 100; i += add) {
+			bPoints.Add(GetPoint(p0, p1, p2, i / 100f));
+		}
+		return bPoints;
+	}
+
 	public static List<Vector3> GetPoints(List<Vector3> points, int passes) {
 		if (points.Count == 3 || points.Count == 4) {
-			List<Vector3> bPoints = new List<Vector3>();
+			List<Vector3> bPoints = new();
 			int add = 100 / passes;
 			for (int i = 0; i <= 100; i += add) {
 				bPoints.Add(points.Count == 3 ? GetPoint(points[0], points[1], points[2], i / 100f) :

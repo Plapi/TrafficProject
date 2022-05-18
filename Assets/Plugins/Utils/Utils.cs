@@ -333,4 +333,24 @@ public static class Utils {
 			IterateAllChilds(child, action);
 		}
 	}
+
+	public static T Random<T>(this List<T> list) {
+		if (list.Count > 0) {
+			return list[Utils.Random(0, list.Count)];
+		}
+		return default;
+	}
+
+	public static T Random<T>(this T[] array) {
+		if (array.Length > 0) {
+			return array[Utils.Random(0, array.Length)];
+		}
+		return default;
+	}
+
+	public static float GetAngle(Vector3 p0, Vector3 p1, Vector3 p2) {
+		Vector3 v0 = p0 - p1;
+		Vector3 v1 = p2 - p1;
+		return Mathf.Atan2(Vector3.Dot(p2, Vector3.Cross(v0, v1)), Vector3.Dot(v0, v1)) * Mathf.Rad2Deg;
+	}
 }

@@ -20,6 +20,13 @@ public class Node : MonoBehaviour {
 		meshFilter = meshRenderer.gameObject.AddComponent<MeshFilter>();
 	}
 
+	public Node GetConnexion(int index = 0) {
+		if (connexions.Count > index) {
+			return connexions[index];
+		}
+		return null;
+	}
+
 	public void AddConnexion(Node node) {
 		connexions.Add(node);
 		node.connexions.Add(this);
@@ -132,28 +139,8 @@ public class Node : MonoBehaviour {
 		right = midPoint - cross * Config.Instance.RoadHalfWidth;
 	}
 
-	private void IntersectPointBetweenNodes(Node node0, Node node1, out Vector3 left, out Vector3 right) {
-		PerpPointToNode(node0, out Vector3 ml0, out Vector3 mr0);
-		node0.PerpMidPointToNode(this, out Vector3 l0, out Vector3 r0);
-		Vector3 dirl0 = ((transform.position + ml0) - (node0.transform.position + r0)).normalized;
-		Vector3 dirr0 = ((transform.position + mr0) - (node0.transform.position + l0)).normalized;
-
-		PerpPointToNode(node1, out Vector3 ml1, out Vector3 mr1);
-		node1.PerpMidPointToNode(this, out Vector3 l1, out Vector3 r1);
-		Vector3 dirl1 = ((transform.position + mr1) - (node1.transform.position + l1)).normalized;
-		Vector3 dirr1 = ((transform.position + ml1) - (node1.transform.position + r1)).normalized;
-
-		if (Math3d.LineLineIntersection(out left, node0.transform.position + r0, dirl0, node1.transform.position + l1, dirl1)) {
-			left = transform.InverseTransformPoint(left);
-		} else {
-			left = ml0;
-		}
-
-		if (Math3d.LineLineIntersection(out right, node0.transform.position + l0, dirr0, node1.transform.position + r1, dirr1)) {
-			right = transform.InverseTransformPoint(right);
-		} else {
-			right = mr0;
-		}
+	public void UpdateHighlightColor(bool correct) {
+		meshRenderer.material.color = correct ? Color.white : Color.red;
 	}
 
 #if UNITY_EDITOR

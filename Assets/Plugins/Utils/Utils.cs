@@ -85,6 +85,10 @@ public static class Utils {
 		transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
 	}
 
+	public static string ToHex(this Color color) {
+		return "#" + ColorUtility.ToHtmlStringRGBA(color);
+	}
+
 	public static Vector3? GetHitPoint() {
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity, 1 << 8)) {
 			return hit.point;

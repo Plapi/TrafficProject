@@ -9,6 +9,7 @@ public class Node : MonoBehaviour {
 
 	private readonly List<Node> connexions = new();
 	private Vector3[] meshVertices = new Vector3[0];
+	private Vector2[] meshUvs = new Vector2[0];
 
 	private MeshRenderer meshRenderer;
 	private MeshFilter meshFilter;
@@ -43,6 +44,7 @@ public class Node : MonoBehaviour {
 		} else if (connexions.Count == 2) {
 			if (meshVertices.Length != 24) {
 				meshVertices = new Vector3[24];
+				meshUvs = new Vector2[24];
 			}
 
 			Vector3 c0 = transform.InverseTransformPoint(connexions[0].transform.position);
@@ -86,7 +88,29 @@ public class Node : MonoBehaviour {
 				normals = normals
 			};
 		}
+
+		if (meshUvs.Length != meshVertices.Length) {
+			meshUvs = new Vector2[meshVertices.Length];
+		}
+		float topWidth = 0f;
+		float bottomWidth = 0f;
+		for (int i = 0; i < meshVertices.Length - 2; i += 2) {
+			topWidth += Vector3.Distance(meshVertices[i], meshVertices[i + 2]);
+			bottomWidth += Vector3.Distance(meshVertices[i + 1], meshVertices[i + 3]);
+		}
+		float tw = 0f;
+		float bw = 0f;
+		for (int i = 0; i < meshVertices.Length - 2; i += 2) {
+			meshUvs[i] = new Vector2(tw / topWidth, 1f);
+			meshUvs[i + 1] = new Vector2(bw / bottomWidth, 0f);
+			tw += Vector3.Distance(meshVertices[i], meshVertices[i + 2]);
+			bw += Vector3.Distance(meshVertices[i + 1], meshVertices[i + 3]);
+		}
+		meshUvs[^2] = new Vector2(1f, 1f);
+		meshUvs[^1] = new Vector2(1f, 0f);
+
 		meshFilter.mesh.vertices = meshVertices;
+		meshFilter.mesh.uv = meshUvs;
 	}
 
 	private Vector3 GetMinCurvePos(Vector3 v0, Vector3 v1) {

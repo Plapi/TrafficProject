@@ -3,8 +3,6 @@ using UnityEngine;
 
 public class NodeController : MonoBehaviour {
 
-	private const float HEIGHT = 0.1f;
-
 	[SerializeField] private BoxCollider map = default;
 
 	private readonly List<Node> nodes = new();
@@ -63,7 +61,7 @@ public class NodeController : MonoBehaviour {
 		point = default;
 		if (map.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, float.MaxValue)) {
 			point = hit.point;
-			point = new Vector3(Mathf.RoundToInt(point.x), point.y + HEIGHT, Mathf.RoundToInt(point.z));
+			point = new Vector3(Mathf.RoundToInt(point.x), point.y + Config.Instance.RoadHeight, Mathf.RoundToInt(point.z));
 			return true;
 		}
 		return false;

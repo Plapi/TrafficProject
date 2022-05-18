@@ -3,10 +3,6 @@ using UnityEngine;
 
 public class Node : MonoBehaviour {
 
-	private const float WIDTH = 2.5f;
-	private const float HALF_WIDTH = WIDTH / 2f;
-	private const float CURVE_DIST = 5f;
-
 	private readonly List<Node> connexions = new();
 	private Vector3[] meshVertices = new Vector3[0];
 	private Vector2[] meshUvs = new Vector2[0];
@@ -56,8 +52,7 @@ public class Node : MonoBehaviour {
 			PerpMidPointToNode(connexions[0], out meshVertices[1], out meshVertices[0]);
 			PerpMidPointToNode(connexions[1], out meshVertices[^2], out meshVertices[^1]);
 			for (int i = 0; i < points.Count - 1; i++) {
-				Debug.DrawLine(transform.position + points[i], transform.position + points[i + 1], Color.blue);
-				Utils.PerpendicularPoints(points[i], points[i + 1], out meshVertices[i * 2 + 2], out meshVertices[i * 2 + 3], HALF_WIDTH);
+				Utils.PerpendicularPoints(points[i], points[i + 1], out meshVertices[i * 2 + 2], out meshVertices[i * 2 + 3], Config.Instance.RoadHalfWidth);
 			}
 		}
 
@@ -111,29 +106,30 @@ public class Node : MonoBehaviour {
 
 		meshFilter.mesh.vertices = meshVertices;
 		meshFilter.mesh.uv = meshUvs;
+		meshFilter.mesh.RecalculateBounds();
 	}
 
 	private Vector3 GetMinCurvePos(Vector3 v0, Vector3 v1) {
 		float dist = Vector3.Distance(v0, v1);
-		if (dist / 2f < CURVE_DIST) {
+		if (dist / 2f < Config.Instance.RoadCurveDist) {
 			return Utils.MidPoint(v0, v1);
 		}
-		return Vector3.Lerp(v0, v1, CURVE_DIST / dist);
+		return Vector3.Lerp(v0, v1, Config.Instance.RoadCurveDist / dist);
 	}
 
 	private void PerpPointToNode(Node node, out Vector3 left, out Vector3 right) {
 		Vector3 dir = node.transform.position - transform.position;
 		Vector3 cross = Vector3.Cross(dir, Vector3.up).normalized;
-		left = cross * HALF_WIDTH;
-		right = -cross * HALF_WIDTH;
+		left = cross * Config.Instance.RoadHalfWidth;
+		right = -cross * Config.Instance.RoadHalfWidth;
 	}
 
 	private void PerpMidPointToNode(Node node, out Vector3 left, out Vector3 right) {
 		Vector3 dir = node.transform.position - transform.position;
 		Vector3 cross = Vector3.Cross(dir, Vector3.up).normalized;
 		Vector3 midPoint = transform.InverseTransformPoint(Utils.MidPoint(transform.position, node.transform.position));
-		left = midPoint + cross * HALF_WIDTH;
-		right = midPoint - cross * HALF_WIDTH;
+		left = midPoint + cross * Config.Instance.RoadHalfWidth;
+		right = midPoint - cross * Config.Instance.RoadHalfWidth;
 	}
 
 	private void IntersectPointBetweenNodes(Node node0, Node node1, out Vector3 left, out Vector3 right) {

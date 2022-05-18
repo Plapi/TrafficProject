@@ -8,7 +8,7 @@ using UnityEditor;
 
 public class ColorPalette : ScriptableObject {
 
-	[SerializeField] private ColorGroup[] m_colors;
+	[SerializeField] private ColorGroup[] colors = default;
 
 	private static ColorPalette instance;
 	public static ColorPalette Instance {
@@ -34,8 +34,8 @@ public class ColorPalette : ScriptableObject {
 
 	private Color GetColor(ColorId id) {
 		int index = (int)id;
-		if (index < m_colors.Length) {
-			return m_colors[index].color;
+		if (index < colors.Length) {
+			return colors[index].color;
 		}
 		return Color.clear;
 	}
@@ -50,8 +50,8 @@ public class ColorPalette : ScriptableObject {
 	public void Save() {
 		string path = Application.dataPath.Replace("Assets", AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets(typeof(ColorId).ToString())[0]));
 		string script = "public enum " + typeof(ColorId) + " {";
-		for (int i = 0; i < m_colors.Length; i++) {
-			script += "\n\t" + m_colors[i].id + ",";
+		for (int i = 0; i < colors.Length; i++) {
+			script += "\n\t" + colors[i].id + ",";
 		}
 		script += "\n\tCount\n}";
 		File.WriteAllText(path, script);

@@ -12,8 +12,8 @@ public class Config : ScriptableObject {
 		}
 	}
 
-	public float RoadWidth = 2.5f;
+	public float RoadWidth;
 	public float RoadHalfWidth => RoadWidth / 2f;
-	public float RoadCurveDist = 5f;
-	public float RoadHeight = 0.1f;
+	public float RoadCurveDist;
+	public float RoadHeight;
 }

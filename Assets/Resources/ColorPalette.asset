@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 120406ffdd88d4960b587ecb79a7ed1d, type: 3}
   m_Name: ColorPalette
   m_EditorClassIdentifier: 
-  m_colors:
+  colors:
   - id: Road
-    color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 0.98039216}

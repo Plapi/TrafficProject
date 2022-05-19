@@ -33,13 +33,12 @@ public class DebugWindow : EditorWindow {
 		Time.timeScale = EditorGUILayout.Slider("Time Scale", Time.timeScale, 0f, 1f);
 
 		if (GUILayout.Button("Test")) {
-			Texture2D texture = new(1, 20);
+			Texture2D texture = new(1, 10);
 			Color roadColor = ColorPalette.Get(ColorId.Road);
 			for (int y = 0; y < texture.height; y++) {
 				texture.SetPixel(0, y, roadColor);
 			}
 			texture.SetPixel(0, 1, Color.white);
-			texture.SetPixel(0, 18, Color.white);
 			texture.Apply();
 
 			File.WriteAllBytes(Application.dataPath + "/Resources/Road.png", texture.EncodeToPNG());

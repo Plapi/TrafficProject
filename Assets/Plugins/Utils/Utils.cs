@@ -336,21 +336,92 @@ public static class Utils {
 
 	public static T Random<T>(this List<T> list) {
 		if (list.Count > 0) {
-			return list[Utils.Random(0, list.Count)];
+			return list[Random(0, list.Count)];
 		}
 		return default;
 	}
 
 	public static T Random<T>(this T[] array) {
 		if (array.Length > 0) {
-			return array[Utils.Random(0, array.Length)];
+			return array[Random(0, array.Length)];
 		}
 		return default;
 	}
 
-	public static float GetAngle(Vector3 p0, Vector3 p1, Vector3 p2) {
+	public static float GetAngle360(Vector3 p0, Vector3 p1, Vector3 p2) {
+		float angle = GetAngleSigned(p0, p1, p2);
+		if (angle < 0) {
+			return angle + 360;
+		}
+		return angle;
+	}
+
+	public static float GetAngleSigned(Vector3 p0, Vector3 p1, Vector3 p2) {
 		Vector3 v0 = p0 - p1;
 		Vector3 v1 = p2 - p1;
 		return Mathf.Atan2(Vector3.Dot(p2, Vector3.Cross(v0, v1)), Vector3.Dot(v0, v1)) * Mathf.Rad2Deg;
+	}
+
+	public static bool Intersection2D(Vector3 v0, Vector3 d0, Vector3 v1, Vector3 d1, out Vector3 intersection) {
+		v0 = new Vector3(v0.x, v0.z, 0f);
+		v1 = new Vector3(v1.x, v1.z, 0f);
+		d0 = new Vector3(d0.x, d0.z, 0f);
+		d1 = new Vector3(d1.x, d1.z, 0f);
+		intersection = GetIntersectionPointCoordinates(v0, v0 + d0 * 100f, v1, v1 + d1 * 100f, out bool found);
+		return found;
+	}
+
+	private static Vector2 GetIntersectionPointCoordinates(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out bool found) {
+		float tmp = (b1.x - b0.x) * (a1.y - a0.y) - (b1.y - b0.y) * (a1.x - a0.x);
+
+		if (tmp == 0) {
+			// No solution!
+			found = false;
+			return Vector2.zero;
+		}
+
+		float mu = ((a0.x - b0.x) * (a1.y - a0.y) - (a0.y - b0.y) * (a1.x - a0.x)) / tmp;
+
+		found = true;
+
+		return new Vector2(
+			b0.x + (b1.x - b0.x) * mu,
+			b0.y + (b1.y - b0.y) * mu
+		);
+	}
+
+	public static bool TryGetIntersection(out Vector3 intersection, Vector3 a0, Vector3 a1, Vector3 b0, Vector3 b1) {
+		bool isIntersecting = false;
+
+		//3d -> 2d
+		Vector2 p1 = new(a0.x, a0.z);
+		Vector2 p2 = new(a1.x, a1.z);
+
+		Vector2 p3 = new(b0.x, b0.z);
+		Vector2 p4 = new(b1.x, b1.z);
+
+		float denominator = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
+
+		//Make sure the denominator is > 0, if so the lines are parallel
+		if (denominator != 0) {
+			float u_a = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denominator;
+			float u_b = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denominator;
+
+			//Is intersecting if u_a and u_b are between 0 and 1
+			if (u_a >= 0 && u_a <= 1 && u_b >= 0 && u_b <= 1) {
+				isIntersecting = true;
+			}
+		}
+
+		intersection = default;
+		if (isIntersecting) {
+			Vector3 dirA = (a1 - a0).normalized * 100f;
+			Vector3 dirB = (b1 - b0).normalized * 100f;
+			if (!Math3d.LineLineIntersection(out intersection, a0, dirA, b0, dirB)) {
+				intersection = MidPoint(a0, b0);
+			}
+		}
+
+		return isIntersecting;
 	}
 }

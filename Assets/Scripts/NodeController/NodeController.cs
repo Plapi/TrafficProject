@@ -20,7 +20,7 @@ public class NodeController : MonoBehaviour {
 			bool isAcceptedDistance = Vector3.Distance(lastNodes[0].transform.position, lastNodes[1].transform.position) >= Config.Instance.RoadWidth;
 
 			if (isAcceptedDistance && lastNodes[1].ConnexionsCount == 2) {
-				float angle = Utils.GetAngle(lastNodes[0].transform.position, lastNodes[1].transform.position, lastNodes[2].transform.position);
+				float angle = Utils.GetAngleSigned(lastNodes[0].transform.position, lastNodes[1].transform.position, lastNodes[2].transform.position);
 				isAcceptedDistance = Mathf.Abs(angle) > 50;
 			}
 

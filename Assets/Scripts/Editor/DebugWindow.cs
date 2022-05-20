@@ -33,22 +33,26 @@ public class DebugWindow : EditorWindow {
 		Time.timeScale = EditorGUILayout.Slider("Time Scale", Time.timeScale, 0f, 1f);
 
 		if (GUILayout.Button("Test")) {
-			Texture2D texture = new(10, 10);
-			Color roadColor = ColorPalette.Get(ColorId.Road);
-			for (int x = 0; x < texture.width; x++) {
-				for (int y = 0; y < texture.height; y++) {
-					texture.SetPixel(x, y, roadColor);
-				}
-				texture.SetPixel(x, 1, Color.white);
-			}
-			texture.Apply();
 
-			File.WriteAllBytes(Application.dataPath + "/Resources/Road.png", texture.EncodeToPNG());
-			AssetDatabase.Refresh();
 		}
 
 		EditorGUILayout.EndScrollView();
 		EditorGUILayout.EndVertical();
+	}
+
+	private void CreateTexturePath() {
+		Texture2D texture = new(10, 10);
+		Color roadColor = ColorPalette.Get(ColorId.Road);
+		for (int x = 0; x < texture.width; x++) {
+			for (int y = 0; y < texture.height; y++) {
+				texture.SetPixel(x, y, roadColor);
+			}
+			texture.SetPixel(x, 1, Color.white);
+		}
+		texture.Apply();
+
+		File.WriteAllBytes(Application.dataPath + "/Resources/Road.png", texture.EncodeToPNG());
+		AssetDatabase.Refresh();
 	}
 
 	private void CropTexture(string inPath, string outPath, int startX, int startY) {

@@ -1,7 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Poly2Tri;
 
 public class Node : MonoBehaviour {
+
+	private const int SINGLE_CONNEXION_VERT_LENGTH = 8;
+	private const int MULTIPLE_CONNEXION_VERT_LENGTH = 26;
 
 	private readonly List<Node> connexions = new();
 	private Vector3[] meshVertices = new Vector3[0];
@@ -11,6 +15,7 @@ public class Node : MonoBehaviour {
 	private MeshFilter meshFilter;
 
 	public int ConnexionsCount => connexions.Count;
+	public Point2D[] BoundPoints { get; private set; }
 
 	private void Awake() {
 		meshRenderer = new GameObject("mesh").AddComponent<MeshRenderer>();
@@ -18,18 +23,16 @@ public class Node : MonoBehaviour {
 		meshRenderer.transform.localPosition = Vector3.zero;
 		meshRenderer.material = Resources.Load<Material>("Materials/Road");
 		meshFilter = meshRenderer.gameObject.AddComponent<MeshFilter>();
-	}
-
-	public Node GetConnexion(int index = 0) {
-		if (connexions.Count > index) {
-			return connexions[index];
-		}
-		return null;
+		BoundPoints = new Point2D[0];
 	}
 
 	public void AddConnexion(Node node) {
 		connexions.Add(node);
 		node.connexions.Add(this);
+	}
+
+	public bool HasConnexion(Node node) {
+		return connexions.Contains(node);
 	}
 
 	public void RemoveConnexion(Node node) {
@@ -89,17 +92,22 @@ public class Node : MonoBehaviour {
 
 	public void UpdateMesh() {
 		if (connexions.Count == 1) {
-			if (meshVertices.Length != 8) {
-				meshVertices = new Vector3[8];
+			if (meshVertices.Length != SINGLE_CONNEXION_VERT_LENGTH) {
+				meshVertices = new Vector3[SINGLE_CONNEXION_VERT_LENGTH];
 			}
 
 			PerpPointToNode(connexions[0], out meshVertices[0], out meshVertices[6]);
 			meshVertices[1] = meshVertices[7] = Vector3.zero;
 			PerpMidPointToNode(connexions[0], out meshVertices[2], out meshVertices[4]);
 			meshVertices[3] = meshVertices[5] = Utils.MidPoint(meshVertices[2], meshVertices[4]);
-		} else if (connexions.Count >= 2) {
-			List<Vector3> vList = new();
 
+		} else if (connexions.Count >= 2) {
+			int verticesLength = connexions.Count * MULTIPLE_CONNEXION_VERT_LENGTH;
+			if (meshVertices.Length != verticesLength) {
+				meshVertices = new Vector3[verticesLength];
+			}
+
+			int index = 0;
 			for (int i = 0; i < connexions.Count; i++) {
 				Node from = connexions[i];
 				Node to = GetClosestNodeFor(from);
@@ -116,42 +124,31 @@ public class Node : MonoBehaviour {
 				Vector3 fromMiddlePoint = Utils.MidPoint(transform.InverseTransformPoint(from.transform.position), Vector3.zero);
 				Vector3 toMiddlePoint = Utils.MidPoint(transform.InverseTransformPoint(to.transform.position), Vector3.zero);
 
-				vList.Add(fromMiddlePoint + Vector3.Cross(fromMiddlePoint, Vector3.up).normalized * Config.Instance.RoadHalfWidth);
-				vList.Add(fromMiddlePoint);
+				meshVertices[index++] = fromMiddlePoint + Vector3.Cross(fromMiddlePoint, Vector3.up).normalized * Config.Instance.RoadHalfWidth;
+				meshVertices[index++] = fromMiddlePoint;
 
-				vList.Add(fromRightPos);
-				vList.Add(fromPos);
+				meshVertices[index++] = fromRightPos;
+				meshVertices[index++] = fromPos;
 
 				Vector3 intersection = Intersection(fromRightPos, -fromDir, toRightPos, -toDir);
 				const int halfCurvePoints = 4;
-				float length = Config.Instance.RoadCurveDist / (halfCurvePoints + 1);
 				for (int j = 1; j <= halfCurvePoints; j++) {
-					vList.Add(Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.1f * j));
-					//vList.Add(fromPos - fromDir * (length * j));
-					vList.Add(Vector3.zero);
-
+					meshVertices[index++] = Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.1f * j);
+					meshVertices[index++] = Vector3.zero;
 				}
-				vList.Add(Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.5f));
-				vList.Add(Vector3.zero);
+				meshVertices[index++] = Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.5f);
+				meshVertices[index++] = Vector3.zero;
 				for (int j = 1; j <= halfCurvePoints; j++) {
-					vList.Add(Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.1f * (halfCurvePoints + 1 + j)));
-					//vList.Add(toDir * (length * j));
-					vList.Add(Vector3.zero);
+					meshVertices[index++] = Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.1f * (halfCurvePoints + 1 + j));
+					meshVertices[index++] = Vector3.zero;
 				}
 
-				vList.Add(toRightPos);
-				vList.Add(toPos);
+				meshVertices[index++] = toRightPos;
+				meshVertices[index++] = toPos;
 
-				vList.Add(toMiddlePoint - Vector3.Cross(toMiddlePoint, Vector3.up).normalized * Config.Instance.RoadHalfWidth);
-				vList.Add(toMiddlePoint);
-
-#if UNITY_EDITOR
-				for (int j = 0; j < vList.Count; j += 2) {
-					Debug.DrawLine(transform.position + vList[j], transform.position + vList[j + 1], Color.yellow);
-				}
-#endif
+				meshVertices[index++] = toMiddlePoint - Vector3.Cross(toMiddlePoint, Vector3.up).normalized * Config.Instance.RoadHalfWidth;
+				meshVertices[index++] = toMiddlePoint;
 			}
-			meshVertices = vList.ToArray();
 		}
 
 		int groups = Mathf.Max(2, connexions.Count);
@@ -188,6 +185,15 @@ public class Node : MonoBehaviour {
 			};
 		}
 
+#if UNITY_EDITOR
+		int[] debugTriangles = meshFilter.mesh.triangles;
+		for (int i = 0; i < debugTriangles.Length - 2; i += 3) {
+			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i]], transform.position + meshVertices[debugTriangles[i + 1]], Color.yellow);
+			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 1]], transform.position + meshVertices[debugTriangles[i + 1]], Color.yellow);
+			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 2]], transform.position + meshVertices[debugTriangles[i]], Color.yellow);
+		}
+#endif
+
 		if (meshUvs.Length != meshVertices.Length) {
 			meshUvs = new Vector2[meshVertices.Length];
 		}
@@ -215,6 +221,18 @@ public class Node : MonoBehaviour {
 		meshFilter.mesh.vertices = meshVertices;
 		meshFilter.mesh.uv = meshUvs;
 		meshFilter.mesh.RecalculateBounds();
+
+		int globalBoundsPointsLength = meshVertices.Length / 2;
+		if (BoundPoints.Length != globalBoundsPointsLength) {
+			BoundPoints = new Point2D[globalBoundsPointsLength];
+			for (int i = 0; i < BoundPoints.Length; i++) {
+				BoundPoints[i] = new();
+			}
+		}
+		for (int i = 0; i < BoundPoints.Length; i++) {
+			BoundPoints[i].X = transform.position.x + meshVertices[i * 2].x;
+			BoundPoints[i].Y = transform.position.z + meshVertices[i * 2].z;
+		}
 	}
 
 	private Node GetClosestNodeFor(Node node) {

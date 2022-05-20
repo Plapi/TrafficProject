@@ -9,6 +9,7 @@ public class NodeController : MonoBehaviour {
 
 	private Node prevNode;
 	private Node currentNode;
+	private Node virtualNode;
 
 	private void Update() {
 
@@ -17,16 +18,55 @@ public class NodeController : MonoBehaviour {
 		}
 
 		if (currentNode != null) {
-			currentNode.transform.position = point;
+			if (virtualNode == null) {
+				currentNode.transform.position = point;
+			}
 
-			bool canBePlaced = prevNode.HasAcceptedDistance(currentNode) && prevNode.HasAcceptedAngle(currentNode);
+			TryGetClosestIntersectionNode(out _);
+
+			TryGetNearNode(point, out Node nearNode);
+			if (nearNode != null && virtualNode == null && nearNode != currentNode && nearNode != prevNode && !prevNode.HasConnexion(nearNode)) {
+				prevNode.RemoveConnexion(currentNode);
+				RemoveNode(currentNode);
+
+				currentNode = virtualNode = nearNode;
+				currentNode.AddConnexion(prevNode);
+
+			} else if (nearNode == null && virtualNode != null) {
+				virtualNode.RemoveConnexion(prevNode);
+				virtualNode.UpdateMesh();
+				virtualNode.UpdateHighlightColor(true);
+				virtualNode = null;
+
+				currentNode = NewNode(point);
+				currentNode.AddConnexion(prevNode);
+
+			} if (virtualNode != null && nearNode != null && virtualNode != nearNode) {
+				virtualNode.RemoveConnexion(prevNode);
+				virtualNode.UpdateMesh();
+				virtualNode.UpdateHighlightColor(true);
+
+				currentNode = virtualNode = nearNode;
+				currentNode.AddConnexion(prevNode);
+			}
+
+			bool canBePlaced = prevNode.HasAcceptedDistance(currentNode) &&
+				prevNode.HasAcceptedAngle(currentNode) && currentNode.HasAcceptedAngle(prevNode);
 
 			currentNode.UpdateHighlightColor(canBePlaced);
 			prevNode.UpdateHighlightColor(canBePlaced);
 
 			if (Input.GetMouseButtonDown(1)) {
 				currentNode.RemoveConnexion(prevNode);
-				RemoveNode(currentNode);
+
+				if (virtualNode != null) {
+					virtualNode.UpdateMesh();
+					virtualNode.UpdateHighlightColor(true);
+					virtualNode = null;
+				} else {
+					RemoveNode(currentNode);
+				}
+				
 				if (prevNode.ConnexionsCount == 0) {
 					RemoveNode(prevNode);
 				} else {
@@ -46,6 +86,10 @@ public class NodeController : MonoBehaviour {
 		}
 
 		if (Input.GetMouseButtonDown(0)) {
+			if (virtualNode != null) {
+				virtualNode = null;
+			}
+
 			if (currentNode == null) {
 				if (TryGetNearNode(point, out Node nearNode)) {
 					prevNode = nearNode;
@@ -88,6 +132,12 @@ public class NodeController : MonoBehaviour {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	private bool TryGetClosestIntersectionNode(out Node intersectionNode) {
+		intersectionNode = default;
+
 		return false;
 	}
 

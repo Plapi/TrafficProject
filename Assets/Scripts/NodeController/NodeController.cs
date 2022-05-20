@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Poly2Tri;
 
 public class NodeController : MonoBehaviour {
 
 	[SerializeField] private BoxCollider map = default;
 
 	private readonly List<Node> nodes = new();
+	private readonly List<List<int>> connexions = new();
 
 	private Node prevNode;
 	private Node currentNode;
@@ -20,12 +20,24 @@ public class NodeController : MonoBehaviour {
 
 		if (currentNode != null) {
 			if (virtualNode == null) {
-				if (TryGetClosestIntersectionNode(out Node intersectionNode) && !prevNode.HasConnexion(intersectionNode)) {
-					prevNode.RemoveConnexion(currentNode);
+				bool hasIntersection = TryGetClosestIntersectionNode(out Node intersectionNode) && !prevNode.IsConnectedWith(intersectionNode);
+				if (!hasIntersection) {
+					if (ConnexionIntersectsOtherConnexion(prevNode, currentNode, out Vector3 intersection, out Node intNode0, out Node intNode1)) {
+						hasIntersection = true;
+						RemoveNodesConnexion(intNode0, intNode1);
+						intersectionNode = NewNode(intersection);
+						CreateNodesConnexion(intersectionNode, intNode0);
+						CreateNodesConnexion(intersectionNode, intNode1);
+						intNode0.UpdateMesh();
+						intNode1.UpdateMesh();
+					}
+				}
+				if (hasIntersection) {
+					RemoveNodesConnexion(currentNode, prevNode);
 					RemoveNode(currentNode);
 
 					currentNode = intersectionNode;
-					currentNode.AddConnexion(prevNode);
+					CreateNodesConnexion(currentNode, prevNode);
 
 					virtualNode = NewNode(point, false);
 				} else {
@@ -34,13 +46,13 @@ public class NodeController : MonoBehaviour {
 			} else {
 				virtualNode.transform.position = point;
 				if (!IsNodeBetweenOtherNodes(currentNode, virtualNode, prevNode)) {
-					currentNode.RemoveConnexion(prevNode);
+					RemoveNodesConnexion(currentNode, prevNode);
 					currentNode.UpdateMesh();
 					currentNode.UpdateHighlightColor(true);
 					Destroy(virtualNode.gameObject);
 
 					currentNode = NewNode(point);
-					currentNode.AddConnexion(prevNode);
+					CreateNodesConnexion(currentNode, prevNode);
 				}
 			}
 
@@ -51,7 +63,7 @@ public class NodeController : MonoBehaviour {
 			prevNode.UpdateHighlightColor(canBePlaced);
 
 			if (Input.GetMouseButtonDown(1)) {
-				currentNode.RemoveConnexion(prevNode);
+				RemoveNodesConnexion(currentNode, prevNode);
 
 				if (virtualNode != null) {
 					currentNode.UpdateMesh();
@@ -90,10 +102,10 @@ public class NodeController : MonoBehaviour {
 					prevNode = nearNode;
 				} else if (HasConnectionBetween(point, out Node node0, out Node node1)) {
 					point = Utils.GetClosestPointOnLine(point, node0.transform.position, node1.transform.position);
-					node0.RemoveConnexion(node1);
+					RemoveNodesConnexion(node0, node1);
 					prevNode = NewNode(point);
-					prevNode.AddConnexion(node0);
-					prevNode.AddConnexion(node1);
+					CreateNodesConnexion(prevNode, node0);
+					CreateNodesConnexion(prevNode, node1);
 					node0.UpdateMesh();
 					node1.UpdateMesh();
 				} else {
@@ -103,9 +115,19 @@ public class NodeController : MonoBehaviour {
 				prevNode = currentNode;
 			}
 			currentNode = NewNode(point);
-			currentNode.AddConnexion(prevNode);
+			CreateNodesConnexion(currentNode, prevNode);
 			return;
 		}
+	}
+
+	private void CreateNodesConnexion(Node node0, Node node1) {
+		node0.Connect(node1);
+		connexions[nodes.IndexOf(node0)].Add(nodes.IndexOf(node1));
+	}
+
+	private void RemoveNodesConnexion(Node node0, Node node1) {
+		node0.Disconnect(node1);
+		connexions[nodes.IndexOf(node0)].Remove(nodes.IndexOf(node1));
 	}
 
 	private bool HasConnectionBetween(Vector3 point, out Node node0, out Node node1) {
@@ -121,13 +143,15 @@ public class NodeController : MonoBehaviour {
 
 	private bool TryGetNearNode(Vector3 point, out Node nearNode) {
 		nearNode = default;
+		float nearNodeDist = float.MaxValue;
 		for (int i = 0; i < nodes.Count; i++) {
-			if (Vector3.Distance(point, nodes[i].transform.position) < Config.Instance.RoadWidth) {
+			float dist = Vector3.Distance(point, nodes[i].transform.position);
+			if (dist < Config.Instance.RoadWidth && nearNodeDist > dist) {
 				nearNode = nodes[i];
-				return true;
+				nearNodeDist = dist;
 			}
 		}
-		return false;
+		return nearNode != null;
 	}
 
 	private bool TryGetClosestIntersectionNode(out Node intersectionNode) {
@@ -169,18 +193,51 @@ public class NodeController : MonoBehaviour {
 		return Utils.PolyContainsAnyPoint(p0, p1, p2, p3, points);
 	}
 
-	private Node NewNode(Vector3 point, bool addAtList = true) {
-		Node node = new GameObject($"node{nodes.Count}").AddComponent<Node>();
+	private bool ConnexionIntersectsOtherConnexion(Node node0, Node node1, out Vector3 intersection, out Node intNode0, out Node intNode1) {
+
+		intersection = default;
+		intNode0 = intNode1 = default;
+
+		Vector3 from = node0.transform.position;
+		Vector3 to = node1.transform.position + (node1.transform.position - from).normalized * Config.Instance.RoadHalfWidth;
+
+		Debug.DrawLine(from, to, Color.cyan);
+
+		for (int i = 0; i < connexions.Count; i++) {
+			intNode0 = nodes[i];
+			if (intNode0 == node0 || intNode0 == node1) {
+				continue;
+			}
+			if (node0.IsConnectedWith(intNode0)) {
+				continue;
+			}
+			for (int j = 0; j < connexions[i].Count; j++) {
+				intNode1 = nodes[connexions[i][j]];
+				if (intNode1 == node0 || intNode1 == node1) {
+					continue;
+				}
+				if (Utils.TryGetIntersection(out intersection, from, to, intNode0.transform.position, intNode1.transform.position)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private Node NewNode(Vector3 point, bool addToList = true) {
+		Node node = new GameObject($"node{(addToList ? nodes.Count : "_virtual")}").AddComponent<Node>();
 		node.transform.parent = transform;
 		node.transform.position = point;
-		if (addAtList) {
+		if (addToList) {
 			nodes.Add(node);
+			connexions.Add(new());
 		}
 		return node;
 	}
 
 	private void RemoveNode(Node node) {
 		Destroy(node.gameObject);
+		connexions.RemoveAt(nodes.IndexOf(node));
 		nodes.Remove(node);
 	}
 

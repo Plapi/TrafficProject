@@ -26,21 +26,21 @@ public class Node : MonoBehaviour {
 		BoundPoints = new Point2D[0];
 	}
 
-	public void AddConnexion(Node node) {
+	public void Connect(Node node) {
 		connexions.Add(node);
 		node.connexions.Add(this);
 	}
 
-	public bool HasConnexion(Node node) {
-		return connexions.Contains(node);
-	}
-
-	public void RemoveConnexion(Node node) {
+	public void Disconnect(Node node) {
 		bool remove0 = connexions.Remove(node);
 		bool remove1 = node.connexions.Remove(this);
 		if (!remove0 || !remove1) {
 			Debug.LogError($"Connexion not found {remove0} {remove1}");
 		}
+	}
+
+	public bool IsConnectedWith(Node node) {
+		return connexions.Contains(node);
 	}
 
 	public bool HasConnectionBetween(Vector3 point, out Node connexion) {

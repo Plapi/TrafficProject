@@ -262,6 +262,14 @@ namespace Poly2Tri
             return false;
         }
 
+        public static bool AnyPointsInPoligon2D(IList<Point2D> polygon, Point2D[] points) {
+			for (int i = 0; i < points.Length; i++) {
+                if (PointInPolygon2D(polygon, points[i])) {
+                    return true;
+				}
+			}
+            return false;
+		}
 
         public static bool PointInPolygon2D(IList<Point2D> polygon, Point2D p)
         {

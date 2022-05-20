@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Poly2Tri;
 
 public class NodeController : MonoBehaviour {
 
@@ -19,35 +20,28 @@ public class NodeController : MonoBehaviour {
 
 		if (currentNode != null) {
 			if (virtualNode == null) {
-				currentNode.transform.position = point;
-			}
+				if (TryGetClosestIntersectionNode(out Node intersectionNode) && !prevNode.HasConnexion(intersectionNode)) {
+					prevNode.RemoveConnexion(currentNode);
+					RemoveNode(currentNode);
 
-			TryGetClosestIntersectionNode(out _);
+					currentNode = intersectionNode;
+					currentNode.AddConnexion(prevNode);
 
-			TryGetNearNode(point, out Node nearNode);
-			if (nearNode != null && virtualNode == null && nearNode != currentNode && nearNode != prevNode && !prevNode.HasConnexion(nearNode)) {
-				prevNode.RemoveConnexion(currentNode);
-				RemoveNode(currentNode);
+					virtualNode = NewNode(point, false);
+				} else {
+					currentNode.transform.position = point;
+				}
+			} else {
+				virtualNode.transform.position = point;
+				if (!IsNodeBetweenOtherNodes(currentNode, virtualNode, prevNode)) {
+					currentNode.RemoveConnexion(prevNode);
+					currentNode.UpdateMesh();
+					currentNode.UpdateHighlightColor(true);
+					Destroy(virtualNode.gameObject);
 
-				currentNode = virtualNode = nearNode;
-				currentNode.AddConnexion(prevNode);
-
-			} else if (nearNode == null && virtualNode != null) {
-				virtualNode.RemoveConnexion(prevNode);
-				virtualNode.UpdateMesh();
-				virtualNode.UpdateHighlightColor(true);
-				virtualNode = null;
-
-				currentNode = NewNode(point);
-				currentNode.AddConnexion(prevNode);
-
-			} if (virtualNode != null && nearNode != null && virtualNode != nearNode) {
-				virtualNode.RemoveConnexion(prevNode);
-				virtualNode.UpdateMesh();
-				virtualNode.UpdateHighlightColor(true);
-
-				currentNode = virtualNode = nearNode;
-				currentNode.AddConnexion(prevNode);
+					currentNode = NewNode(point);
+					currentNode.AddConnexion(prevNode);
+				}
 			}
 
 			bool canBePlaced = prevNode.HasAcceptedDistance(currentNode) &&
@@ -60,13 +54,13 @@ public class NodeController : MonoBehaviour {
 				currentNode.RemoveConnexion(prevNode);
 
 				if (virtualNode != null) {
-					virtualNode.UpdateMesh();
-					virtualNode.UpdateHighlightColor(true);
-					virtualNode = null;
+					currentNode.UpdateMesh();
+					currentNode.UpdateHighlightColor(true);
+					Destroy(virtualNode.gameObject);
 				} else {
 					RemoveNode(currentNode);
 				}
-				
+
 				if (prevNode.ConnexionsCount == 0) {
 					RemoveNode(prevNode);
 				} else {
@@ -87,6 +81,7 @@ public class NodeController : MonoBehaviour {
 
 		if (Input.GetMouseButtonDown(0)) {
 			if (virtualNode != null) {
+				Destroy(virtualNode.gameObject);
 				virtualNode = null;
 			}
 
@@ -137,15 +132,50 @@ public class NodeController : MonoBehaviour {
 
 	private bool TryGetClosestIntersectionNode(out Node intersectionNode) {
 		intersectionNode = default;
+		float dist = 0f;
 
-		return false;
+		for (int i = 0; i < nodes.Count; i++) {
+			if (nodes[i] != currentNode && nodes[i] != prevNode) {
+				if (IsNodeBetweenOtherNodes(nodes[i], currentNode, prevNode)) {
+					if (intersectionNode == null) {
+						intersectionNode = nodes[i];
+						dist = Vector3.Distance(prevNode.transform.position, intersectionNode.transform.position);
+					} else {
+						float d = Vector3.Distance(prevNode.transform.position, intersectionNode.transform.position);
+						if (dist > d) {
+							dist = d;
+							intersectionNode = nodes[i];
+						}
+					}
+				}
+			}
+		}
+
+		return intersectionNode != null;
 	}
 
-	private Node NewNode(Vector3 point) {
+	private static bool IsNodeBetweenOtherNodes(Node node, Node otherNode0, Node otherNode1) {
+		Utils.PerpendicularPoints(otherNode0.transform.position, otherNode1.transform.position, out Vector3 p0, out Vector3 p1, Config.Instance.RoadHalfWidth);
+		Utils.PerpendicularPoints(otherNode1.transform.position, otherNode0.transform.position, out Vector3 p2, out Vector3 p3, Config.Instance.RoadHalfWidth);
+
+		Vector3[] points = new Vector3[5] {
+			node.transform.position,
+			node.transform.position + (Vector3.forward + Vector3.left) * Config.Instance.RoadHalfWidth,
+			node.transform.position + (Vector3.forward + Vector3.right) * Config.Instance.RoadHalfWidth,
+			node.transform.position + (Vector3.back + Vector3.left) * Config.Instance.RoadHalfWidth,
+			node.transform.position + (Vector3.back + Vector3.right) * Config.Instance.RoadHalfWidth
+		};
+
+		return Utils.PolyContainsAnyPoint(p0, p1, p2, p3, points);
+	}
+
+	private Node NewNode(Vector3 point, bool addAtList = true) {
 		Node node = new GameObject($"node{nodes.Count}").AddComponent<Node>();
 		node.transform.parent = transform;
 		node.transform.position = point;
-		nodes.Add(node);
+		if (addAtList) {
+			nodes.Add(node);
+		}
 		return node;
 	}
 
@@ -160,6 +190,25 @@ public class NodeController : MonoBehaviour {
 			point = hit.point;
 			point = new Vector3(Mathf.RoundToInt(point.x), point.y + Config.Instance.RoadHeight, Mathf.RoundToInt(point.z));
 			return true;
+		}
+		return false;
+	}
+
+	private int prevRaycastX;
+	private int prevRaycastZ;
+	private bool GetNewRaycastPoint(out Vector3 point) {
+		point = default;
+		if (map.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, float.MaxValue)) {
+			Vector3 hitPoint = hit.point;
+			int x = Mathf.RoundToInt(hitPoint.x);
+			int z = Mathf.RoundToInt(hitPoint.z);
+			if (x != prevRaycastX || z != prevRaycastZ) {
+				prevRaycastX = x;
+				prevRaycastZ = z;
+				point = new Vector3(x, point.y + Config.Instance.RoadHeight, z);
+				return true;
+			}
+
 		}
 		return false;
 	}

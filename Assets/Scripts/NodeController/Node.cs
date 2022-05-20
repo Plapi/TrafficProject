@@ -26,6 +26,10 @@ public class Node : MonoBehaviour {
 		BoundPoints = new Point2D[0];
 	}
 
+	public List<Node> GetConnexions() {
+		return connexions;
+	}
+
 	public void Connect(Node node) {
 		connexions.Add(node);
 		node.connexions.Add(this);

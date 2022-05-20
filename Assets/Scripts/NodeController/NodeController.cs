@@ -1,12 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 public class NodeController : MonoBehaviour {
 
 	[SerializeField] private BoxCollider map = default;
 
 	private readonly List<Node> nodes = new();
-	private readonly List<List<int>> connexions = new();
 
 	private Node prevNode;
 	private Node currentNode;
@@ -33,11 +36,11 @@ public class NodeController : MonoBehaviour {
 					}
 				}
 				if (hasIntersection) {
-					RemoveNodesConnexion(currentNode, prevNode);
+					RemoveNodesConnexion(prevNode, currentNode);
 					RemoveNode(currentNode);
 
 					currentNode = intersectionNode;
-					CreateNodesConnexion(currentNode, prevNode);
+					CreateNodesConnexion(prevNode, currentNode);
 
 					virtualNode = NewNode(point, false);
 				} else {
@@ -46,13 +49,13 @@ public class NodeController : MonoBehaviour {
 			} else {
 				virtualNode.transform.position = point;
 				if (!IsNodeBetweenOtherNodes(currentNode, virtualNode, prevNode)) {
-					RemoveNodesConnexion(currentNode, prevNode);
+					RemoveNodesConnexion(prevNode, currentNode);
 					currentNode.UpdateMesh();
 					currentNode.UpdateHighlightColor(true);
 					Destroy(virtualNode.gameObject);
 
 					currentNode = NewNode(point);
-					CreateNodesConnexion(currentNode, prevNode);
+					CreateNodesConnexion(prevNode, currentNode);
 				}
 			}
 
@@ -63,7 +66,7 @@ public class NodeController : MonoBehaviour {
 			prevNode.UpdateHighlightColor(canBePlaced);
 
 			if (Input.GetMouseButtonDown(1)) {
-				RemoveNodesConnexion(currentNode, prevNode);
+				RemoveNodesConnexion(prevNode, currentNode);
 
 				if (virtualNode != null) {
 					currentNode.UpdateMesh();
@@ -89,6 +92,45 @@ public class NodeController : MonoBehaviour {
 			if (!canBePlaced) {
 				return;
 			}
+		} else {
+			if (Input.GetKeyDown(KeyCode.R)) {
+				for (int i = 0; i < nodes.Count; i++) {
+					Destroy(nodes[i].gameObject);
+				}
+				nodes.Clear();
+				return;
+			} else if (Input.GetKeyDown(KeyCode.D)) {
+				if (TryGetNearNode(point, out Node nearNode)) {
+					List<Node> nodeConnexions = new(nearNode.GetConnexions());
+					for (int i = 0; i < nodeConnexions.Count; i++) {
+						RemoveNodesConnexion(nearNode, nodeConnexions[i]);
+						if (nodeConnexions[i].ConnexionsCount == 0) {
+							RemoveNode(nodeConnexions[i]);
+						} else {
+							nodeConnexions[i].UpdateMesh();
+						}
+					}
+					RemoveNode(nearNode);
+				} else {
+					for (int i = 0; i < nodes.Count; i++) {
+						if (nodes[i].HasConnectionBetween(point, out Node connexion)) {
+							RemoveNodesConnexion(nodes[i], connexion);
+							if (nodes[i].ConnexionsCount == 0) {
+								RemoveNode(nodes[i]);
+							} else {
+								nodes[i].UpdateMesh();
+							}
+							if (connexion.ConnexionsCount == 0) {
+								RemoveNode(connexion);
+							} else {
+								connexion.UpdateMesh();
+							}
+							break;
+						}
+					}
+				}
+				return;
+			}
 		}
 
 		if (Input.GetMouseButtonDown(0)) {
@@ -104,8 +146,8 @@ public class NodeController : MonoBehaviour {
 					point = Utils.GetClosestPointOnLine(point, node0.transform.position, node1.transform.position);
 					RemoveNodesConnexion(node0, node1);
 					prevNode = NewNode(point);
-					CreateNodesConnexion(prevNode, node0);
-					CreateNodesConnexion(prevNode, node1);
+					CreateNodesConnexion(node0, prevNode);
+					CreateNodesConnexion(node1, prevNode);
 					node0.UpdateMesh();
 					node1.UpdateMesh();
 				} else {
@@ -115,19 +157,17 @@ public class NodeController : MonoBehaviour {
 				prevNode = currentNode;
 			}
 			currentNode = NewNode(point);
-			CreateNodesConnexion(currentNode, prevNode);
+			CreateNodesConnexion(prevNode, currentNode);
 			return;
 		}
 	}
 
-	private void CreateNodesConnexion(Node node0, Node node1) {
-		node0.Connect(node1);
-		connexions[nodes.IndexOf(node0)].Add(nodes.IndexOf(node1));
+	private void CreateNodesConnexion(Node from, Node to) {
+		from.Connect(to);
 	}
 
 	private void RemoveNodesConnexion(Node node0, Node node1) {
 		node0.Disconnect(node1);
-		connexions[nodes.IndexOf(node0)].Remove(nodes.IndexOf(node1));
 	}
 
 	private bool HasConnectionBetween(Vector3 point, out Node node0, out Node node1) {
@@ -203,16 +243,14 @@ public class NodeController : MonoBehaviour {
 
 		Debug.DrawLine(from, to, Color.cyan);
 
-		for (int i = 0; i < connexions.Count; i++) {
+		for (int i = 0; i < nodes.Count; i++) {
 			intNode0 = nodes[i];
 			if (intNode0 == node0 || intNode0 == node1) {
 				continue;
 			}
-			if (node0.IsConnectedWith(intNode0)) {
-				continue;
-			}
-			for (int j = 0; j < connexions[i].Count; j++) {
-				intNode1 = nodes[connexions[i][j]];
+			List<Node> connexions = nodes[i].GetConnexions();
+			for (int j = 0; j < connexions.Count; j++) {
+				intNode1 = connexions[j];
 				if (intNode1 == node0 || intNode1 == node1) {
 					continue;
 				}
@@ -230,14 +268,12 @@ public class NodeController : MonoBehaviour {
 		node.transform.position = point;
 		if (addToList) {
 			nodes.Add(node);
-			connexions.Add(new());
 		}
 		return node;
 	}
 
 	private void RemoveNode(Node node) {
 		Destroy(node.gameObject);
-		connexions.RemoveAt(nodes.IndexOf(node));
 		nodes.Remove(node);
 	}
 
@@ -246,6 +282,9 @@ public class NodeController : MonoBehaviour {
 		if (map.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, float.MaxValue)) {
 			point = hit.point;
 			point = new Vector3(Mathf.RoundToInt(point.x), point.y + Config.Instance.RoadHeight, Mathf.RoundToInt(point.z));
+			//point = new Vector3((float)System.Math.Round(point.x / 5f) * 5,
+			//	point.y + Config.Instance.RoadHeight,
+			//	(float)System.Math.Round(point.z / 5f) * 5);
 			return true;
 		}
 		return false;
@@ -269,4 +308,20 @@ public class NodeController : MonoBehaviour {
 		}
 		return false;
 	}
+
+#if UNITY_EDITOR
+	public void OnInspectorGUI() {
+
+	}
+#endif
 }
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(NodeController))]
+public class NodeControllerEditor : Editor {
+	public override void OnInspectorGUI() {
+		base.OnInspectorGUI();
+		((NodeController)target).OnInspectorGUI();
+	}
+}
+#endif

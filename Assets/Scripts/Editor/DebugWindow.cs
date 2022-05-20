@@ -33,12 +33,14 @@ public class DebugWindow : EditorWindow {
 		Time.timeScale = EditorGUILayout.Slider("Time Scale", Time.timeScale, 0f, 1f);
 
 		if (GUILayout.Button("Test")) {
-			Texture2D texture = new(1, 10);
+			Texture2D texture = new(10, 10);
 			Color roadColor = ColorPalette.Get(ColorId.Road);
-			for (int y = 0; y < texture.height; y++) {
-				texture.SetPixel(0, y, roadColor);
+			for (int x = 0; x < texture.width; x++) {
+				for (int y = 0; y < texture.height; y++) {
+					texture.SetPixel(x, y, roadColor);
+				}
+				texture.SetPixel(x, 1, Color.white);
 			}
-			texture.SetPixel(0, 1, Color.white);
 			texture.Apply();
 
 			File.WriteAllBytes(Application.dataPath + "/Resources/Road.png", texture.EncodeToPNG());
@@ -53,7 +55,7 @@ public class DebugWindow : EditorWindow {
 		Material mat = (Material)AssetDatabase.LoadAssetAtPath(inPath, typeof(Material));
 
 		Texture2D texture = DuplicateTexture((Texture2D)mat.mainTexture);
-		Texture2D cropTexture = new Texture2D(124, 124);
+		Texture2D cropTexture = new(124, 124);
 
 		for (int x = 0; x < cropTexture.width; x++) {
 			for (int y = 0; y < cropTexture.height; y++) {

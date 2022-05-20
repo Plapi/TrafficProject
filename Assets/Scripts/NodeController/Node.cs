@@ -33,8 +33,39 @@ public class Node : MonoBehaviour {
 	}
 
 	public void RemoveConnexion(Node node) {
-		connexions.Remove(node);
-		node.connexions.Remove(this);
+		bool remove0 = connexions.Remove(node);
+		bool remove1 = node.connexions.Remove(this);
+		if (!remove0 || !remove1) {
+			Debug.LogError($"Connexion not found {remove0} {remove1}");
+		}
+	}
+
+	public bool HasConnectionBetween(Vector3 point, out Node connexion) {
+		connexion = default;
+		for (int i = 0; i < connexions.Count; i++) {
+			PerpPointToNode(connexions[i], out Vector3 p0, out Vector3 p1);
+			p0 += transform.position;
+			p1 += transform.position;
+
+			connexions[i].PerpPointToNode(this, out Vector3 p2, out Vector3 p3);
+			p2 += connexions[i].transform.position;
+			p3 += connexions[i].transform.position;
+
+			Vector3 forwardLeft = point + (Vector3.forward + Vector3.left) * Config.Instance.RoadHalfWidth;
+			Vector3 forwardRight = point + (Vector3.forward + Vector3.right) * Config.Instance.RoadHalfWidth;
+			Vector3 backLeft = point + (Vector3.back + Vector3.left) * Config.Instance.RoadHalfWidth;
+			Vector3 backRight = point + (Vector3.back + Vector3.right) * Config.Instance.RoadHalfWidth;
+
+			Vector3[] points = new Vector3[5] {
+				point, forwardLeft, forwardRight, backLeft, backRight
+			};
+
+			if (Utils.PolyContainsAnyPoint(p0, p1, p2, p3, points)) {
+				connexion = connexions[i];
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void UpdateMesh() {
@@ -77,13 +108,16 @@ public class Node : MonoBehaviour {
 				float length = Config.Instance.RoadCurveDist / (halfCurvePoints + 1);
 				for (int j = 1; j <= halfCurvePoints; j++) {
 					vList.Add(Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.1f * j));
-					vList.Add(fromPos - fromDir * (length * j));
+					//vList.Add(fromPos - fromDir * (length * j));
+					vList.Add(Vector3.zero);
+
 				}
 				vList.Add(Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.5f));
 				vList.Add(Vector3.zero);
 				for (int j = 1; j <= halfCurvePoints; j++) {
 					vList.Add(Bezier.GetPoint(fromRightPos, intersection, toRightPos, 0.1f * (halfCurvePoints + 1 + j)));
-					vList.Add(toDir * (length * j));
+					//vList.Add(toDir * (length * j));
+					vList.Add(Vector3.zero);
 				}
 
 				vList.Add(toRightPos);
@@ -208,7 +242,7 @@ public class Node : MonoBehaviour {
 #if UNITY_EDITOR
 	private void OnDrawGizmos() {
 		Gizmos.color = Color.red;
-		Gizmos.DrawCube(transform.position, Vector3.one * 0.25f);
+		Gizmos.DrawCube(transform.position, Vector3.one * 0.5f);
 
 		connexions.ForEach(cn => {
 			Gizmos.DrawLine(transform.position, cn.transform.position);

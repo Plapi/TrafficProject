@@ -57,6 +57,14 @@ public class NodeController : MonoBehaviour {
 				if (TryGetNearNode(point, out Node nearNode)) {
 					lastNodes[1] = nearNode;
 					lastNodes[2] = nearNode.GetConnexion();
+				} else if (HasConnectionBetween(point, out Node node0, out Node node1)) {
+					point = Utils.GetClosestPointOnLine(point, node0.transform.position, node1.transform.position);
+					node0.RemoveConnexion(node1);
+					lastNodes[1] = NewNode(point);
+					lastNodes[1].AddConnexion(node0);
+					lastNodes[1].AddConnexion(node1);
+					node0.UpdateMesh();
+					node1.UpdateMesh();
 				} else {
 					lastNodes[1] = NewNode(point);
 				}
@@ -71,9 +79,15 @@ public class NodeController : MonoBehaviour {
 		}
 	}
 
-	private void RemoveNode(Node node) {
-		Destroy(node.gameObject);
-		nodes.Remove(node);
+	private bool HasConnectionBetween(Vector3 point, out Node node0, out Node node1) {
+		node0 = node1 = default;
+		for (int i = 0; i < nodes.Count; i++) {
+			if (nodes[i].HasConnectionBetween(point, out node1)) {
+				node0 = nodes[i];
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private bool TryGetNearNode(Vector3 point, out Node nearNode) {
@@ -93,6 +107,11 @@ public class NodeController : MonoBehaviour {
 		node.transform.position = point;
 		nodes.Add(node);
 		return node;
+	}
+
+	private void RemoveNode(Node node) {
+		Destroy(node.gameObject);
+		nodes.Remove(node);
 	}
 
 	private bool GetRaycastPoint(out Vector3 point) {

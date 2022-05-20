@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using DG.Tweening;
 using JsonFx.Json;
+using Poly2Tri;
 
 public static class Utils {
 	public static void SetX(this Transform transform, float x) {
@@ -423,5 +424,42 @@ public static class Utils {
 		}
 
 		return isIntersecting;
+	}
+
+	public static bool PolyContainsPoint(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p) {
+		Point2D[] polyPoints = new Point2D[4] {
+			new(p0.x, p0.z),
+			new(p1.x, p1.z),
+			new(p2.x, p2.z),
+			new(p3.x, p3.z)
+		};
+		return PolygonUtil.PointInPolygon2D(polyPoints, new(p.x, p.z));
+	}
+
+	public static bool PolyContainsAnyPoint(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3[] points) {
+		Point2D[] polyPoints = new Point2D[4] {
+			new(p0.x, p0.z),
+			new(p1.x, p1.z),
+			new(p2.x, p2.z),
+			new(p3.x, p3.z)
+		};
+		return PolyContainsAnyPoint(polyPoints, points);
+	}
+
+	public static bool PolyContainsAnyPoint(Point2D[] polyPoints, Vector3[] points) {
+		Point2D[] points2D = new Point2D[points.Length];
+		for (int i = 0; i < points2D.Length; i++) {
+			points2D[i] = new(points[i].x, points[i].z);
+		}
+		for (int i = 0; i < points2D.Length; i++) {
+			if (PolygonUtil.PointInPolygon2D(polyPoints, points2D[i])) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static Vector3 GetClosestPointOnLine(Vector3 p, Vector3 a, Vector3 b) {
+		return a + Vector3.Project(p - a, b - a);
 	}
 }

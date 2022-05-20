@@ -68,6 +68,25 @@ public class Node : MonoBehaviour {
 		return false;
 	}
 
+	public bool HasAcceptedDistance(Node node) {
+		return Vector3.Distance(transform.position, node.transform.position) >= Config.Instance.RoadWidth;
+	}
+
+	public bool HasAcceptedAngle(Node node) {
+		if (connexions.Count <= 1) {
+			return true;
+		}
+		for (int i = 0; i < connexions.Count; i++) {
+			if (connexions[i] != node) {
+				float angle = Utils.GetAngleSigned(node.transform.position, transform.position, connexions[i].transform.position);
+				if (Mathf.Abs(angle) < Config.Instance.RoadsMinAngle) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	public void UpdateMesh() {
 		if (connexions.Count == 1) {
 			if (meshVertices.Length != 8) {

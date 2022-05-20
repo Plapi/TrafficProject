@@ -6,7 +6,9 @@ public class NodeController : MonoBehaviour {
 	[SerializeField] private BoxCollider map = default;
 
 	private readonly List<Node> nodes = new();
-	private readonly Node[] lastNodes = new Node[3];
+
+	private Node prevNode;
+	private Node currentNode;
 
 	private void Update() {
 
@@ -14,67 +16,55 @@ public class NodeController : MonoBehaviour {
 			return;
 		}
 
-		if (lastNodes[0] != null) {
-			lastNodes[0].transform.position = point;
+		if (currentNode != null) {
+			currentNode.transform.position = point;
 
-			bool isAcceptedDistance = Vector3.Distance(lastNodes[0].transform.position, lastNodes[1].transform.position) >= Config.Instance.RoadWidth;
+			bool canBePlaced = prevNode.HasAcceptedDistance(currentNode) && prevNode.HasAcceptedAngle(currentNode);
 
-			if (isAcceptedDistance && lastNodes[1].ConnexionsCount == 2) {
-				float angle = Utils.GetAngleSigned(lastNodes[0].transform.position, lastNodes[1].transform.position, lastNodes[2].transform.position);
-				isAcceptedDistance = Mathf.Abs(angle) > 50;
-			}
-
-			lastNodes[0].UpdateHighlightColor(isAcceptedDistance);
-			if (lastNodes[2] == null) {
-				lastNodes[1].UpdateHighlightColor(isAcceptedDistance);
-			}
+			currentNode.UpdateHighlightColor(canBePlaced);
+			prevNode.UpdateHighlightColor(canBePlaced);
 
 			if (Input.GetMouseButtonDown(1)) {
-				lastNodes[0].RemoveConnexion(lastNodes[1]);
-				RemoveNode(lastNodes[0]);
-				if (lastNodes[1].ConnexionsCount == 0) {
-					RemoveNode(lastNodes[1]);
+				currentNode.RemoveConnexion(prevNode);
+				RemoveNode(currentNode);
+				if (prevNode.ConnexionsCount == 0) {
+					RemoveNode(prevNode);
 				} else {
-					lastNodes[1].UpdateMesh();
-					lastNodes[1].UpdateHighlightColor(true);
+					prevNode.UpdateMesh();
+					prevNode.UpdateHighlightColor(true);
 				}
-				for (int i = 0; i < lastNodes.Length; i++) {
-					lastNodes[i] = null;
-				}
+				prevNode = currentNode = null;
 				return;
 			}
 
-			lastNodes[0].UpdateMesh();
-			lastNodes[1].UpdateMesh();
+			currentNode.UpdateMesh();
+			prevNode.UpdateMesh();
 
-			if (!isAcceptedDistance) {
+			if (!canBePlaced) {
 				return;
 			}
 		}
 
 		if (Input.GetMouseButtonDown(0)) {
-			if (lastNodes[0] == null) {
+			if (currentNode == null) {
 				if (TryGetNearNode(point, out Node nearNode)) {
-					lastNodes[1] = nearNode;
-					lastNodes[2] = nearNode.GetConnexion();
+					prevNode = nearNode;
 				} else if (HasConnectionBetween(point, out Node node0, out Node node1)) {
 					point = Utils.GetClosestPointOnLine(point, node0.transform.position, node1.transform.position);
 					node0.RemoveConnexion(node1);
-					lastNodes[1] = NewNode(point);
-					lastNodes[1].AddConnexion(node0);
-					lastNodes[1].AddConnexion(node1);
+					prevNode = NewNode(point);
+					prevNode.AddConnexion(node0);
+					prevNode.AddConnexion(node1);
 					node0.UpdateMesh();
 					node1.UpdateMesh();
 				} else {
-					lastNodes[1] = NewNode(point);
+					prevNode = NewNode(point);
 				}
 			} else {
-				for (int i = lastNodes.Length - 1; i > 0; i--) {
-					lastNodes[i] = lastNodes[i - 1];
-				}
+				prevNode = currentNode;
 			}
-			lastNodes[0] = NewNode(point);
-			lastNodes[0].AddConnexion(lastNodes[1]);
+			currentNode = NewNode(point);
+			currentNode.AddConnexion(prevNode);
 			return;
 		}
 	}

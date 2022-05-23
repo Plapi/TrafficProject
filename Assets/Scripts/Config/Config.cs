@@ -7,14 +7,24 @@ public class Config : ScriptableObject {
 		get {
 			if (instance == null) {
 				instance = Resources.Load<Config>("Config");
+				instance.Init();
 			}
 			return instance;
 		}
 	}
 
+	private void Init() {
+		roadHalfWidth = RoadWidth / 2f;
+		roadDoubleWidth = RoadWidth * 2f;
+	}
+
 	public float RoadWidth;
-	public float RoadHalfWidth => RoadWidth / 2f;
+	public float RoadHalfWidth => roadHalfWidth;
+	public float RoadDoubleWidth => roadDoubleWidth;
 	public float RoadCurveDist;
 	public float RoadHeight;
 	public float RoadsMinAngle;
+
+	private float roadHalfWidth;
+	private float roadDoubleWidth;
 }

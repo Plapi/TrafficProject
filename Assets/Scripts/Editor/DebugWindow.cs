@@ -33,22 +33,50 @@ public class DebugWindow : EditorWindow {
 		Time.timeScale = EditorGUILayout.Slider("Time Scale", Time.timeScale, 0f, 1f);
 
 		if (GUILayout.Button("Test")) {
-
+			CreateRoadTexture();
 		}
 
 		EditorGUILayout.EndScrollView();
 		EditorGUILayout.EndVertical();
 	}
 
-	private void CreateTexturePath() {
-		Texture2D texture = new(10, 10);
+	private void CreateRoadTexture() {
+		const int textureSize = 256;
+
+		int startX, endX, startY, endY;
+
+		Texture2D texture = new(textureSize, textureSize);
 		Color roadColor = ColorPalette.Get(ColorId.Road);
 		for (int x = 0; x < texture.width; x++) {
 			for (int y = 0; y < texture.height; y++) {
 				texture.SetPixel(x, y, roadColor);
 			}
-			texture.SetPixel(x, 1, Color.white);
+
+			startY = (int)(0.05f * textureSize);
+			endY = (int)(0.1f * textureSize);
+			for (int y = startY; y <= endY; y++) {
+				texture.SetPixel(x, y, Color.white);
+			}
+
+			startY = (int)(0.9f * textureSize);
+			endY = (int)(0.95f * textureSize);
+			for (int y = startY; y <= endY; y++) {
+				texture.SetPixel(x, y, Color.white);
+			}
 		}
+
+		startX = (int)(0.25f * textureSize);
+		endX = (int)(0.75f * textureSize);
+
+		startY = (int)(0.475f * textureSize);
+		endY = (int)(0.525f * textureSize);
+
+		for (int x = startX; x < endX; x++) {
+			for (int y = startY; y < endY; y++) {
+				texture.SetPixel(x, y, Color.white);
+			}
+		}
+
 		texture.Apply();
 
 		File.WriteAllBytes(Application.dataPath + "/Resources/Road.png", texture.EncodeToPNG());
@@ -91,7 +119,7 @@ public class DebugWindow : EditorWindow {
 		}
 
 		private static void TryToAddScene(string scene) {
-			List<string> scenes = new List<string>(NavigatorScenes);
+			List<string> scenes = new(NavigatorScenes);
 			if (!scenes.Contains(scene)) {
 				scenes.Insert(0, scene);
 				while (scenes.Count > MAX_NAVIGATOR_SCENES) {

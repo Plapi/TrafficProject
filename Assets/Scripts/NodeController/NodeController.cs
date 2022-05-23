@@ -186,7 +186,7 @@ public class NodeController : MonoBehaviour {
 		float nearNodeDist = float.MaxValue;
 		for (int i = 0; i < nodes.Count; i++) {
 			float dist = Vector3.Distance(point, nodes[i].transform.position);
-			if (dist < Config.Instance.RoadWidth && nearNodeDist > dist) {
+			if (dist < Config.Instance.RoadDoubleWidth && nearNodeDist > dist) {
 				nearNode = nodes[i];
 				nearNodeDist = dist;
 			}
@@ -219,8 +219,8 @@ public class NodeController : MonoBehaviour {
 	}
 
 	private static bool IsNodeBetweenOtherNodes(Node node, Node otherNode0, Node otherNode1) {
-		Utils.PerpendicularPoints(otherNode0.transform.position, otherNode1.transform.position, out Vector3 p0, out Vector3 p1, Config.Instance.RoadHalfWidth);
-		Utils.PerpendicularPoints(otherNode1.transform.position, otherNode0.transform.position, out Vector3 p2, out Vector3 p3, Config.Instance.RoadHalfWidth);
+		Utils.PerpendicularPoints(otherNode0.transform.position, otherNode1.transform.position, out Vector3 p0, out Vector3 p1, Config.Instance.RoadWidth);
+		Utils.PerpendicularPoints(otherNode1.transform.position, otherNode0.transform.position, out Vector3 p2, out Vector3 p3, Config.Instance.RoadWidth);
 
 		Vector3[] points = new Vector3[5] {
 			node.transform.position,

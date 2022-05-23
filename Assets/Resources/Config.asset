@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a3b6a0301b7a49ff84ec345339c3611, type: 3}
   m_Name: Config
   m_EditorClassIdentifier: 
-  RoadWidth: 4
-  RoadCurveDist: 4
+  RoadWidth: 6
+  RoadCurveDist: 6
   RoadHeight: 0.1
   RoadsMinAngle: 30

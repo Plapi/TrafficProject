@@ -18,7 +18,7 @@ public class NodeMeshLineExpander : MonoBehaviour {
 		meshRenderer.material.color = color;
 	}
 
-	public Vector3[] UpdateMesh(Vector3[] edgePoints, bool goDown = false) {
+	public Vector3[] UpdateMesh(Vector3[] edgePoints, float value, bool oSide = false, bool goDown = false) {
 
 		int vLength = edgePoints.Length * 2;
 		if (meshVertices.Length != vLength) {
@@ -29,11 +29,20 @@ public class NodeMeshLineExpander : MonoBehaviour {
 		if (!goDown) {
 			for (int j = 0; j < edgePoints.Length - 1; j++) {
 				meshVertices[j * 2] = edgePoints[j];
-				Utils.PerpendicularPoints(edgePoints[j], edgePoints[j + 1], out meshVertices[j * 2 + 1], out _, 0.25f);
+				if (oSide) {
+					Utils.PerpendicularPoints(edgePoints[j], edgePoints[j + 1], out _, out meshVertices[j * 2 + 1], value);
+				} else {
+					Utils.PerpendicularPoints(edgePoints[j], edgePoints[j + 1], out meshVertices[j * 2 + 1], out _, value);
+				}
 				expandPoints[j] = meshVertices[j * 2 + 1];
 			}
 			meshVertices[^2] = edgePoints[^1];
-			Utils.PerpendicularPoints(edgePoints[^1], edgePoints[^2], out _, out meshVertices[^1], 0.25f);
+			if (oSide) {
+				Utils.PerpendicularPoints(edgePoints[^1], edgePoints[^2], out meshVertices[^1], out _, value);
+			} else {
+				Utils.PerpendicularPoints(edgePoints[^1], edgePoints[^2], out _, out meshVertices[^1], value);
+			}
+
 			expandPoints[^1] = meshVertices[^1];
 		} else {
 			for (int j = 0; j < edgePoints.Length; j++) {
@@ -47,12 +56,21 @@ public class NodeMeshLineExpander : MonoBehaviour {
 			int[] triangles = new int[(meshVertices.Length - 2) * 3];
 			int index = 0;
 			for (int i = 0; i < triangles.Length; i += 6) {
-				triangles[i] = index;
-				triangles[i + 1] = index + 1;
-				triangles[i + 2] = index + 2;
-				triangles[i + 3] = index + 3;
-				triangles[i + 4] = index + 2;
-				triangles[i + 5] = index + 1;
+				if (oSide) {
+					triangles[i] = index + 2;
+					triangles[i + 1] = index + 1;
+					triangles[i + 2] = index;
+					triangles[i + 3] = index + 1;
+					triangles[i + 4] = index + 2;
+					triangles[i + 5] = index + 3;
+				} else {
+					triangles[i] = index;
+					triangles[i + 1] = index + 1;
+					triangles[i + 2] = index + 2;
+					triangles[i + 3] = index + 3;
+					triangles[i + 4] = index + 2;
+					triangles[i + 5] = index + 1;
+				}
 				index += 2;
 			}
 

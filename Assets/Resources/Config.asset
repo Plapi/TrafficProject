@@ -15,7 +15,7 @@ MonoBehaviour:
   RoadWidth: 5
   RoadCurveDist: 5
   RoadHeight: 0.5
-  RoadsMinAngle: 30
+  RoadsMinAngle: 45
   RoadTextureMap: 0.35
   RoadMaterial: {fileID: 2100000, guid: 540b94c770f89490c96f4b9e7030f9fb, type: 2}
   RoadLineMaterial: {fileID: 2100000, guid: 95b121b2d10d34a658f1dd42c3472516, type: 2}

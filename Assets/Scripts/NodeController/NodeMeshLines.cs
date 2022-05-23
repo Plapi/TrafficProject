@@ -6,7 +6,7 @@ public class NodeMeshLines : MonoBehaviour {
 	private NodeMeshLineExpander[] secondLines = new NodeMeshLineExpander[0];
 	private NodeMeshLineExpander[] thirdLines = new NodeMeshLineExpander[0];
 
-	public void UpdateMesh(Line[] lines) {
+	public void UpdateMesh(Line[] lines, bool oSide = false) {
 		if (firstLines.Length != lines.Length) {
 			for (int i = 0; i < firstLines.Length; i++) {
 				Destroy(firstLines[i].gameObject);
@@ -26,9 +26,9 @@ public class NodeMeshLines : MonoBehaviour {
 			}
 		}
 		for (int i = 0; i < lines.Length; i++) {
-			Vector3[] edgePoints = firstLines[i].UpdateMesh(lines[i].points);
-			edgePoints = secondLines[i].UpdateMesh(edgePoints);
-			thirdLines[i].UpdateMesh(edgePoints, true);
+			Vector3[] edgePoints = firstLines[i].UpdateMesh(lines[i].points, lines[i].value, oSide);
+			edgePoints = secondLines[i].UpdateMesh(edgePoints, lines[i].value, oSide);
+			thirdLines[i].UpdateMesh(edgePoints, lines[i].value, oSide, true);
 		}
 	}
 
@@ -41,5 +41,6 @@ public class NodeMeshLines : MonoBehaviour {
 
 	public class Line {
 		public Vector3[] points;
+		public float value = 0.25f;
 	}
 }

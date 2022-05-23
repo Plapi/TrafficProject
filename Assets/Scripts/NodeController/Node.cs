@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Node : MonoBehaviour {
 
-	private const int SINGLE_CONNEXION_VERT_LENGTH = 4;
+	private const int SINGLE_CONNEXION_VERT_LENGTH = 14;
 	private const int MULTIPLE_CONNEXION_VERT_LENGTH = 24;
 
 	private readonly List<Node> connexions = new();
@@ -87,7 +87,6 @@ public class Node : MonoBehaviour {
 		for (int i = 0; i < connexions.Count; i++) {
 			if (connexions[i] != node) {
 				float angle = Utils.GetAngleSigned(node.transform.position, transform.position, connexions[i].transform.position);
-				Debug.LogError(angle);
 				if (Mathf.Abs(angle) < Config.Instance.RoadsMinAngle) {
 					return false;
 				}
@@ -101,17 +100,43 @@ public class Node : MonoBehaviour {
 			if (meshVertices.Length != SINGLE_CONNEXION_VERT_LENGTH) {
 				meshVertices = new Vector3[SINGLE_CONNEXION_VERT_LENGTH];
 			}
-			PerpPointToNode(connexions[0], out meshVertices[0], out meshVertices[1]);
-			PerpMidPointToNode(connexions[0], out meshVertices[2], out meshVertices[3]);
 
-			nodeMeshLines.UpdateMesh(new NodeMeshLines.Line[2] {
-					new() {
-						points = new Vector3[] { meshVertices[2], meshVertices[0] }
-					},
-					new() {
-						points = new Vector3[] { meshVertices[1], meshVertices[3] }
-					}
-				});
+			NodeMeshLines.Line line = new() {
+				points = new Vector3[SINGLE_CONNEXION_VERT_LENGTH]
+			};
+
+			PerpMidPointToNode(connexions[0], out meshVertices[1], out meshVertices[0]);
+			PerpPointToNode(connexions[0], out meshVertices[3], out meshVertices[2]);
+
+			line.points[0] = meshVertices[0];
+			line.points[1] = meshVertices[2];
+
+			Vector3 pLeft = meshVertices[2] + (meshVertices[2] - meshVertices[0]).normalized * Config.Instance.RoadHalfWidth;
+			Vector3 pRight = meshVertices[3] + (meshVertices[3] - meshVertices[1]).normalized * Config.Instance.RoadHalfWidth;
+			Vector3 pMiddle = Utils.MidPoint(pLeft, pRight);
+
+			int index = 4;
+			for (int j = 1; j <= 4; j++) {
+				Vector3 leftPoint = Bezier.GetPoint(meshVertices[2], pLeft, pMiddle, j * 0.2f);
+				Vector3 rightPoint = Bezier.GetPoint(meshVertices[3], pRight, pMiddle, j * 0.2f);
+
+				meshVertices[index++] = leftPoint;
+				meshVertices[index++] = rightPoint;
+
+				line.points[j + 1] = leftPoint;
+				line.points[12 - j] = rightPoint;
+			}
+
+			meshVertices[^2] = Bezier.GetPoint(meshVertices[2], pLeft, pMiddle, 0.98f);
+			meshVertices[^1] = Bezier.GetPoint(meshVertices[3], pRight, pMiddle, 0.98f);
+
+			line.points[6] = meshVertices[^2];
+			line.points[7] = meshVertices[^1];
+
+			line.points[^2] = meshVertices[3];
+			line.points[^1] = meshVertices[1];
+
+			nodeMeshLines.UpdateMesh(new NodeMeshLines.Line[1] { line }, true);
 		} else if (connexions.Count >= 2) {
 
 			Vector3 c0 = transform.InverseTransformPoint(connexions[0].transform.position);
@@ -175,15 +200,15 @@ public class Node : MonoBehaviour {
 					meshVertices[index++] = cp0Right;
 					meshVertices[index++] = cp0Left;
 
-					lines[i].points[^1] = c0Right;
-					lines[i].points[^2] = cp0Right;
+					lines[i].points[^1] = c0Left;
+					lines[i].points[^2] = cp0Left;
 
 					if (connexions.Count == 2) {
 						lines[1] = new NodeMeshLines.Line {
 							points = new Vector3[12]
 						};
-						lines[1].points[0] = c0Left;
-						lines[1].points[1] = cp0Left;
+						lines[1].points[0] = c0Right;
+						lines[1].points[1] = cp0Right;
 					}
 
 					for (int j = 1; j <= 8; j++) {
@@ -192,9 +217,9 @@ public class Node : MonoBehaviour {
 						meshVertices[index++] = rightBPoint;
 						meshVertices[index++] = leftBPoint;
 
-						lines[i].points[10 - j] = rightBPoint;
+						lines[i].points[10 - j] = leftBPoint;
 						if (connexions.Count == 2) {
-							lines[1].points[1 + j] = leftBPoint;
+							lines[1].points[1 + j] = rightBPoint;
 						}
 					}
 
@@ -203,16 +228,16 @@ public class Node : MonoBehaviour {
 					meshVertices[index++] = c1Left;
 					meshVertices[index++] = c1Right;
 
-					lines[i].points[1] = cp1Left;
-					lines[i].points[0] = c1Left;
+					lines[i].points[1] = cp1Right;
+					lines[i].points[0] = c1Right;
 
 					if (connexions.Count == 2) {
-						lines[1].points[^2] = cp1Right;
-						lines[1].points[^1] = c1Right;
+						lines[1].points[^2] = cp1Left;
+						lines[1].points[^1] = c1Left;
 					}
 				}
 
-				nodeMeshLines.UpdateMesh(lines);
+				nodeMeshLines.UpdateMesh(lines, true);
 			}
 		}
 

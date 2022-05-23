@@ -358,9 +358,10 @@ public static class Utils {
 	}
 
 	public static float GetAngleSigned(Vector3 p0, Vector3 p1, Vector3 p2) {
-		Vector3 v0 = p0 - p1;
-		Vector3 v1 = p2 - p1;
-		return Mathf.Atan2(Vector3.Dot(p2, Vector3.Cross(v0, v1)), Vector3.Dot(v0, v1)) * Mathf.Rad2Deg;
+		return Vector3.SignedAngle((p0 - p1).normalized, (p2 - p1).normalized, Vector3.up);
+		//Vector3 v0 = p0 - p1;
+		//Vector3 v1 = p2 - p1;
+		//return Mathf.Atan2(Vector3.Dot(p2, Vector3.Cross(v0, v1)), Vector3.Dot(v0, v1)) * Mathf.Rad2Deg;
 	}
 
 	public static bool Intersection2D(Vector3 v0, Vector3 d0, Vector3 v1, Vector3 d1, out Vector3 intersection) {

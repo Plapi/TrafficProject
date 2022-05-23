@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Poly2Tri;
 
 public class Node : MonoBehaviour {
 
@@ -9,21 +8,23 @@ public class Node : MonoBehaviour {
 
 	private readonly List<Node> connexions = new();
 	private Vector3[] meshVertices = new Vector3[0];
-	private Vector2[] meshUvs = new Vector2[0];
 
 	private MeshRenderer meshRenderer;
 	private MeshFilter meshFilter;
+	private NodeMeshLines nodeMeshLines;
 
 	public int ConnexionsCount => connexions.Count;
-	public Point2D[] BoundPoints { get; private set; }
 
 	private void Awake() {
 		meshRenderer = new GameObject("mesh").AddComponent<MeshRenderer>();
 		meshRenderer.transform.parent = transform;
 		meshRenderer.transform.localPosition = Vector3.zero;
-		meshRenderer.material = Resources.Load<Material>("Materials/Road");
+		meshRenderer.material = Config.Instance.RoadMaterial;
 		meshFilter = meshRenderer.gameObject.AddComponent<MeshFilter>();
-		BoundPoints = new Point2D[0];
+
+		nodeMeshLines = gameObject.AddComponent<NodeMeshLines>();
+		nodeMeshLines.transform.parent = transform;
+		nodeMeshLines.transform.localPosition = Vector3.zero;
 	}
 
 	public List<Node> GetConnexions() {
@@ -86,6 +87,7 @@ public class Node : MonoBehaviour {
 		for (int i = 0; i < connexions.Count; i++) {
 			if (connexions[i] != node) {
 				float angle = Utils.GetAngleSigned(node.transform.position, transform.position, connexions[i].transform.position);
+				Debug.LogError(angle);
 				if (Mathf.Abs(angle) < Config.Instance.RoadsMinAngle) {
 					return false;
 				}
@@ -101,6 +103,15 @@ public class Node : MonoBehaviour {
 			}
 			PerpPointToNode(connexions[0], out meshVertices[0], out meshVertices[1]);
 			PerpMidPointToNode(connexions[0], out meshVertices[2], out meshVertices[3]);
+
+			nodeMeshLines.UpdateMesh(new NodeMeshLines.Line[2] {
+					new() {
+						points = new Vector3[] { meshVertices[2], meshVertices[0] }
+					},
+					new() {
+						points = new Vector3[] { meshVertices[1], meshVertices[3] }
+					}
+				});
 		} else if (connexions.Count >= 2) {
 
 			Vector3 c0 = transform.InverseTransformPoint(connexions[0].transform.position);
@@ -112,6 +123,15 @@ public class Node : MonoBehaviour {
 				}
 				PerpMidPointToNode(connexions[0], out meshVertices[1], out meshVertices[0]);
 				PerpMidPointToNode(connexions[1], out meshVertices[2], out meshVertices[3]);
+
+				nodeMeshLines.UpdateMesh(new NodeMeshLines.Line[2] {
+					new() {
+						points = new Vector3[] { meshVertices[2], meshVertices[0] }
+					},
+					new() {
+						points = new Vector3[] { meshVertices[1], meshVertices[3] }
+					}
+				});
 			} else {
 
 				List<Node> connexionsClockwise = GetConnexionsClockwise();
@@ -121,7 +141,14 @@ public class Node : MonoBehaviour {
 				}
 				int index = 0;
 
+				NodeMeshLines.Line[] lines = new NodeMeshLines.Line[connexions.Count];
+
 				for (int i = 0; i < connexionsClockwise.Count - 1; i++) {
+
+					lines[i] = new NodeMeshLines.Line {
+						points = new Vector3[12]
+					};
+
 					Node from = connexionsClockwise[i];
 					Node to = connexionsClockwise[i + 1];
 
@@ -148,16 +175,44 @@ public class Node : MonoBehaviour {
 					meshVertices[index++] = cp0Right;
 					meshVertices[index++] = cp0Left;
 
+					lines[i].points[^1] = c0Right;
+					lines[i].points[^2] = cp0Right;
+
+					if (connexions.Count == 2) {
+						lines[1] = new NodeMeshLines.Line {
+							points = new Vector3[12]
+						};
+						lines[1].points[0] = c0Left;
+						lines[1].points[1] = cp0Left;
+					}
+
 					for (int j = 1; j <= 8; j++) {
-						meshVertices[index++] = Bezier.GetPoint(cp0Right, interRight, cp1Left, j * 0.1f);
-						meshVertices[index++] = Bezier.GetPoint(cp0Left, interLeft, cp1Right, j * 0.1f);
+						Vector3 rightBPoint = Bezier.GetPoint(cp0Right, interRight, cp1Left, j * 0.1f);
+						Vector3 leftBPoint = Bezier.GetPoint(cp0Left, interLeft, cp1Right, j * 0.1f);
+						meshVertices[index++] = rightBPoint;
+						meshVertices[index++] = leftBPoint;
+
+						lines[i].points[10 - j] = rightBPoint;
+						if (connexions.Count == 2) {
+							lines[1].points[1 + j] = leftBPoint;
+						}
 					}
 
 					meshVertices[index++] = cp1Left;
 					meshVertices[index++] = cp1Right;
 					meshVertices[index++] = c1Left;
 					meshVertices[index++] = c1Right;
+
+					lines[i].points[1] = cp1Left;
+					lines[i].points[0] = c1Left;
+
+					if (connexions.Count == 2) {
+						lines[1].points[^2] = cp1Right;
+						lines[1].points[^1] = c1Right;
+					}
 				}
+
+				nodeMeshLines.UpdateMesh(lines);
 			}
 		}
 
@@ -195,41 +250,8 @@ public class Node : MonoBehaviour {
 		}
 #endif
 
-		if (meshUvs.Length != meshVertices.Length) {
-			meshUvs = new Vector2[meshVertices.Length];
-		}
-		float topWidth = 0f;
-		float bottomWidth = 0f;
-		for (int i = 0; i < meshVertices.Length - 2; i += 2) {
-			topWidth += Vector3.Distance(meshVertices[i], meshVertices[i + 2]);
-			bottomWidth += Vector3.Distance(meshVertices[i + 1], meshVertices[i + 3]);
-		}
-		float tw = 0f;
-		float bw = 0f;
-		for (int i = 0; i < meshVertices.Length - 2; i += 2) {
-			meshUvs[i] = new Vector2(tw / topWidth, 0f);
-			meshUvs[i + 1] = new Vector2(bw / bottomWidth, 1f);
-			tw += Vector3.Distance(meshVertices[i], meshVertices[i + 2]);
-			bw += Vector3.Distance(meshVertices[i + 1], meshVertices[i + 3]);
-		}
-		meshUvs[^2] = new Vector2(1f, 0f);
-		meshUvs[^1] = new Vector2(1f, 1f);
-
 		meshFilter.mesh.vertices = meshVertices;
-		meshFilter.mesh.uv = meshUvs;
 		meshFilter.mesh.RecalculateBounds();
-
-		int globalBoundsPointsLength = meshVertices.Length / 2;
-		if (BoundPoints.Length != globalBoundsPointsLength) {
-			BoundPoints = new Point2D[globalBoundsPointsLength];
-			for (int i = 0; i < BoundPoints.Length; i++) {
-				BoundPoints[i] = new();
-			}
-		}
-		for (int i = 0; i < BoundPoints.Length; i++) {
-			BoundPoints[i].X = transform.position.x + meshVertices[i * 2].x;
-			BoundPoints[i].Y = transform.position.z + meshVertices[i * 2].z;
-		}
 	}
 
 	private List<Node> GetConnexionsClockwise() {
@@ -283,7 +305,7 @@ public class Node : MonoBehaviour {
 	}
 
 	public void UpdateHighlightColor(bool correct) {
-		//meshRenderer.material.color = correct ? Color.white : Color.red;
+		meshRenderer.material.color = correct ? ColorPalette.Get(ColorId.Road) : ColorPalette.Get(ColorId.RoadWrong);
 	}
 
 #if UNITY_EDITOR
@@ -298,7 +320,7 @@ public class Node : MonoBehaviour {
 		bool showLabel = UnityEditor.Selection.activeGameObject == gameObject;
 		Gizmos.color = Color.green;
 		for (int i = 0; i < meshVertices.Length; i++) {
-			Gizmos.DrawCube(transform.position + meshVertices[i], Vector3.one * 0.15f);
+			//Gizmos.DrawCube(transform.position + meshVertices[i], Vector3.one * 0.15f);
 			if (showLabel) {
 				UnityEditor.Handles.Label(transform.position + meshVertices[i], i.ToString());
 			}

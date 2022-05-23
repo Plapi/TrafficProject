@@ -33,7 +33,12 @@ public class DebugWindow : EditorWindow {
 		Time.timeScale = EditorGUILayout.Slider("Time Scale", Time.timeScale, 0f, 1f);
 
 		if (GUILayout.Button("Test")) {
-			CreateRoadTexture();
+			Texture2D texture = new(1, 2);
+			texture.SetPixel(0, 0, Color.white);
+			texture.SetPixel(0, 1, ColorPalette.Get(ColorId.Road));
+			texture.Apply();
+			File.WriteAllBytes(Application.dataPath + "/Resources/RoadLine.png", texture.EncodeToPNG());
+			AssetDatabase.Refresh();
 		}
 
 		EditorGUILayout.EndScrollView();

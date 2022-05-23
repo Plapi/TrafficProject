@@ -24,6 +24,10 @@ public class Config : ScriptableObject {
 	public float RoadCurveDist;
 	public float RoadHeight;
 	public float RoadsMinAngle;
+	public float RoadTextureMap;
+
+	public Material RoadMaterial;
+	public Material RoadLineMaterial;
 
 	private float roadHalfWidth;
 	private float roadDoubleWidth;

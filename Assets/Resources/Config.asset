@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a3b6a0301b7a49ff84ec345339c3611, type: 3}
   m_Name: Config
   m_EditorClassIdentifier: 
-  RoadWidth: 6
-  RoadCurveDist: 6
-  RoadHeight: 0.1
+  RoadWidth: 5
+  RoadCurveDist: 5
+  RoadHeight: 0.5
   RoadsMinAngle: 30
+  RoadTextureMap: 0.35
+  RoadMaterial: {fileID: 2100000, guid: 540b94c770f89490c96f4b9e7030f9fb, type: 2}
+  RoadLineMaterial: {fileID: 2100000, guid: 95b121b2d10d34a658f1dd42c3472516, type: 2}

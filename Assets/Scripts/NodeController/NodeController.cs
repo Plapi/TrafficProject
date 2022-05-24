@@ -15,151 +15,159 @@ public class NodeController : MonoBehaviour {
 	private Node currentNode;
 	private Node virtualNode;
 
-	private void Update() {
+	public bool CurrentNodeCanBePlaced { get; private set; }
+	public Node CurrentNode => currentNode;
 
+	public void UpdateController() {
 		if (!GetRaycastPoint(out Vector3 point)) {
 			return;
 		}
 
-		if (currentNode != null) {
-			if (virtualNode == null) {
-				bool hasIntersection = TryGetClosestIntersectionNode(out Node intersectionNode) && !prevNode.IsConnectedWith(intersectionNode);
-				if (!hasIntersection) {
-					if (ConnexionIntersectsOtherConnexion(prevNode, currentNode, out Vector3 intersection, out Node intNode0, out Node intNode1)) {
-						hasIntersection = true;
-						RemoveNodesConnexion(intNode0, intNode1);
-						intersectionNode = NewNode(intersection);
-						CreateNodesConnexion(intersectionNode, intNode0);
-						CreateNodesConnexion(intersectionNode, intNode1);
-						intNode0.UpdateMesh();
-						intNode1.UpdateMesh();
-					}
-				}
-				if (hasIntersection) {
-					RemoveNodesConnexion(prevNode, currentNode);
-					RemoveNode(currentNode);
-
-					currentNode = intersectionNode;
-					CreateNodesConnexion(prevNode, currentNode);
-
-					virtualNode = NewNode(point, false);
-				} else {
-					currentNode.transform.position = point;
-				}
+		if (currentNode == null) {
+			if (TryGetNearNode(point, out Node nearNode)) {
+				prevNode = nearNode;
+			} else if (HasConnectionBetween(point, out Node node0, out Node node1)) {
+				point = Utils.GetClosestPointOnLine(point, node0.transform.position, node1.transform.position);
+				RemoveNodesConnexion(node0, node1);
+				prevNode = NewNode(point);
+				CreateNodesConnexion(node0, prevNode);
+				CreateNodesConnexion(node1, prevNode);
+				node0.UpdateMesh();
+				node1.UpdateMesh();
 			} else {
-				virtualNode.transform.position = point;
-				if (!IsNodeBetweenOtherNodes(currentNode, virtualNode, prevNode)) {
-					RemoveNodesConnexion(prevNode, currentNode);
-					currentNode.UpdateMesh();
-					currentNode.UpdateHighlightColor(true);
-					Destroy(virtualNode.gameObject);
-
-					currentNode = NewNode(point);
-					CreateNodesConnexion(prevNode, currentNode);
-				}
+				prevNode = NewNode(point);
 			}
 
-			bool canBePlaced = prevNode.HasAcceptedDistance(currentNode) &&
-				prevNode.HasAcceptedAngle(currentNode) && currentNode.HasAcceptedAngle(prevNode);
-
-			currentNode.UpdateHighlightColor(canBePlaced);
-			prevNode.UpdateHighlightColor(canBePlaced);
-
-			if (Input.GetMouseButtonDown(1)) {
-				RemoveNodesConnexion(prevNode, currentNode);
-
-				if (virtualNode != null) {
-					currentNode.UpdateMesh();
-					currentNode.UpdateHighlightColor(true);
-					Destroy(virtualNode.gameObject);
-				} else {
-					RemoveNode(currentNode);
-				}
-
-				if (prevNode.ConnexionsCount == 0) {
-					RemoveNode(prevNode);
-				} else {
-					prevNode.UpdateMesh();
-					prevNode.UpdateHighlightColor(true);
-				}
-				prevNode = currentNode = null;
-				return;
-			}
-
-			currentNode.UpdateMesh();
-			prevNode.UpdateMesh();
-
-			if (!canBePlaced) {
-				return;
-			}
-		} else {
-			if (Input.GetKeyDown(KeyCode.R)) {
-				for (int i = 0; i < nodes.Count; i++) {
-					Destroy(nodes[i].gameObject);
-				}
-				nodes.Clear();
-				return;
-			} else if (Input.GetKeyDown(KeyCode.D)) {
-				if (TryGetNearNode(point, out Node nearNode)) {
-					List<Node> nodeConnexions = new(nearNode.GetConnexions());
-					for (int i = 0; i < nodeConnexions.Count; i++) {
-						RemoveNodesConnexion(nearNode, nodeConnexions[i]);
-						if (nodeConnexions[i].ConnexionsCount == 0) {
-							RemoveNode(nodeConnexions[i]);
-						} else {
-							nodeConnexions[i].UpdateMesh();
-						}
-					}
-					RemoveNode(nearNode);
-				} else {
-					for (int i = 0; i < nodes.Count; i++) {
-						if (nodes[i].HasConnectionBetween(point, out Node connexion)) {
-							RemoveNodesConnexion(nodes[i], connexion);
-							if (nodes[i].ConnexionsCount == 0) {
-								RemoveNode(nodes[i]);
-							} else {
-								nodes[i].UpdateMesh();
-							}
-							if (connexion.ConnexionsCount == 0) {
-								RemoveNode(connexion);
-							} else {
-								connexion.UpdateMesh();
-							}
-							break;
-						}
-					}
-				}
-				return;
-			}
-		}
-
-		if (Input.GetMouseButtonDown(0)) {
-			if (virtualNode != null) {
-				Destroy(virtualNode.gameObject);
-				virtualNode = null;
-			}
-
-			if (currentNode == null) {
-				if (TryGetNearNode(point, out Node nearNode)) {
-					prevNode = nearNode;
-				} else if (HasConnectionBetween(point, out Node node0, out Node node1)) {
-					point = Utils.GetClosestPointOnLine(point, node0.transform.position, node1.transform.position);
-					RemoveNodesConnexion(node0, node1);
-					prevNode = NewNode(point);
-					CreateNodesConnexion(node0, prevNode);
-					CreateNodesConnexion(node1, prevNode);
-					node0.UpdateMesh();
-					node1.UpdateMesh();
-				} else {
-					prevNode = NewNode(point);
-				}
-			} else {
-				prevNode = currentNode;
-			}
 			currentNode = NewNode(point);
 			CreateNodesConnexion(prevNode, currentNode);
+		}
+
+		if (virtualNode == null) {
+			bool hasIntersection = TryGetClosestIntersectionNode(out Node intersectionNode) && !prevNode.IsConnectedWith(intersectionNode);
+			if (!hasIntersection) {
+				if (ConnexionIntersectsOtherConnexion(prevNode, currentNode, out Vector3 intersection, out Node intNode0, out Node intNode1)) {
+					hasIntersection = true;
+					RemoveNodesConnexion(intNode0, intNode1);
+					intersectionNode = NewNode(intersection);
+					CreateNodesConnexion(intersectionNode, intNode0);
+					CreateNodesConnexion(intersectionNode, intNode1);
+					intNode0.UpdateMesh();
+					intNode1.UpdateMesh();
+				}
+			}
+			if (hasIntersection) {
+				RemoveNodesConnexion(prevNode, currentNode);
+				RemoveNode(currentNode);
+
+				currentNode = intersectionNode;
+				CreateNodesConnexion(prevNode, currentNode);
+
+				virtualNode = NewNode(point, false);
+			} else {
+				currentNode.transform.position = point;
+			}
+		} else {
+			virtualNode.transform.position = point;
+			if (!IsNodeBetweenOtherNodes(currentNode, virtualNode, prevNode)) {
+				RemoveNodesConnexion(prevNode, currentNode);
+				currentNode.UpdateMesh();
+				currentNode.UpdateHighlightColor(true);
+				Destroy(virtualNode.gameObject);
+
+				currentNode = NewNode(point);
+				CreateNodesConnexion(prevNode, currentNode);
+			}
+		}
+
+		CurrentNodeCanBePlaced = prevNode.HasAcceptedDistance(currentNode) &&
+			prevNode.HasAcceptedAngle(currentNode) && currentNode.HasAcceptedAngle(prevNode);
+
+		currentNode.UpdateHighlightColor(CurrentNodeCanBePlaced);
+		prevNode.UpdateHighlightColor(CurrentNodeCanBePlaced);
+
+		currentNode.UpdateMesh();
+		prevNode.UpdateMesh();
+	}
+
+	public void ApplyCurrentNode() {
+		if (virtualNode != null) {
+			Destroy(virtualNode.gameObject);
+			virtualNode = null;
+		}
+		currentNode = prevNode = null;
+	}
+
+	public void DismissCurrentNode() {
+		if (currentNode == null) {
 			return;
 		}
+
+		RemoveNodesConnexion(prevNode, currentNode);
+
+		if (virtualNode != null) {
+			currentNode.UpdateMesh();
+			currentNode.UpdateHighlightColor(true);
+			Destroy(virtualNode.gameObject);
+		} else {
+			RemoveNode(currentNode);
+		}
+
+		if (prevNode.ConnexionsCount == 0) {
+			RemoveNode(prevNode);
+		} else {
+			prevNode.UpdateMesh();
+			prevNode.UpdateHighlightColor(true);
+		}
+		prevNode = currentNode = null;
+	}
+
+	public void EraseAll() {
+		for (int i = 0; i < nodes.Count; i++) {
+			Destroy(nodes[i].gameObject);
+		}
+		nodes.Clear();
+	}
+
+	public void Demolish() {
+		if (!GetRaycastPoint(out Vector3 point)) {
+			return;
+		}
+		if (TryGetNearNode(point, out Node nearNode)) {
+			List<Node> nodeConnexions = new(nearNode.GetConnexions());
+			for (int i = 0; i < nodeConnexions.Count; i++) {
+				RemoveNodesConnexion(nearNode, nodeConnexions[i]);
+				if (nodeConnexions[i].ConnexionsCount == 0) {
+					RemoveNode(nodeConnexions[i]);
+				} else {
+					nodeConnexions[i].UpdateMesh();
+				}
+			}
+			RemoveNode(nearNode);
+		} else {
+			for (int i = 0; i < nodes.Count; i++) {
+				if (nodes[i].HasConnectionBetween(point, out Node connexion)) {
+					RemoveNodesConnexion(nodes[i], connexion);
+					if (nodes[i].ConnexionsCount == 0) {
+						RemoveNode(nodes[i]);
+					} else {
+						nodes[i].UpdateMesh();
+					}
+					if (connexion.ConnexionsCount == 0) {
+						RemoveNode(connexion);
+					} else {
+						connexion.UpdateMesh();
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	public bool IsMouseInputCloseToCurrentNode() {
+		if (currentNode == null || !GetRaycastPoint(out Vector3 point)) {
+			return false;
+		}
+		return Vector3.Distance(point, currentNode.transform.position) <= Config.Instance.RoadWidth;
 	}
 
 	private void CreateNodesConnexion(Node from, Node to) {

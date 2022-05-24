@@ -10,12 +10,12 @@ public class NodeMeshLineExpander : MonoBehaviour {
 
 	private void Awake() {
 		meshRenderer = gameObject.AddComponent<MeshRenderer>();
-		meshRenderer.material = Config.Instance.RoadLineMaterial;
+		meshRenderer.material = Config.Instance.RoadSideMarkMaterial;
 		meshFilter = meshRenderer.gameObject.AddComponent<MeshFilter>();
 	}
 
-	public void SetColor(Color color) {
-		meshRenderer.material.color = color;
+	public void SetMaterial(Material mat) {
+		meshRenderer.material = mat;
 	}
 
 	public Vector3[] UpdateMesh(Vector3[] edgePoints, float value, bool oSide = false, bool goDown = false) {

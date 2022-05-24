@@ -29,7 +29,8 @@ public class Config : ScriptableObject {
 	public bool RightDriving;
 
 	public Material RoadMaterial;
-	public Material RoadLineMaterial;
+	public Material RoadWrongMaterial;
+	public Material RoadSideMarkMaterial;
 
 	private float roadHalfWidth;
 	private float roadDoubleWidth;

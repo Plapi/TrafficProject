@@ -19,4 +19,5 @@ MonoBehaviour:
   RoadTextureMap: 0.35
   RightDriving: 1
   RoadMaterial: {fileID: 2100000, guid: 540b94c770f89490c96f4b9e7030f9fb, type: 2}
-  RoadLineMaterial: {fileID: 2100000, guid: 95b121b2d10d34a658f1dd42c3472516, type: 2}
+  RoadWrongMaterial: {fileID: 2100000, guid: f6281279728c247f8a55c1fa072cb39e, type: 2}
+  RoadSideMarkMaterial: {fileID: 2100000, guid: 0f3fe908b37a24051b9cb7993f583fc1, type: 2}

@@ -19,7 +19,7 @@ public class Node : MonoBehaviour {
 		meshRenderer = new GameObject("mesh").AddComponent<MeshRenderer>();
 		meshRenderer.transform.parent = transform;
 		meshRenderer.transform.localPosition = Vector3.zero;
-		meshRenderer.material = Config.Instance.RoadMaterial;
+		UpdateHighlightColor(true);
 		meshFilter = meshRenderer.gameObject.AddComponent<MeshFilter>();
 
 		nodeMeshLines = gameObject.AddComponent<NodeMeshLines>();
@@ -375,7 +375,7 @@ public class Node : MonoBehaviour {
 	}
 
 	public void UpdateHighlightColor(bool correct) {
-		meshRenderer.material.color = correct ? ColorPalette.Get(ColorId.Road) : ColorPalette.Get(ColorId.RoadWrong);
+		meshRenderer.material = correct ? Config.Instance.RoadMaterial : Config.Instance.RoadWrongMaterial;
 	}
 
 #if UNITY_EDITOR

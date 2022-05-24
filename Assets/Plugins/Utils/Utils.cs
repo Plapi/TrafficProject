@@ -63,6 +63,13 @@ public static class Utils {
 		transform.localPosition = new Vector3(x, y, z);
 	}
 
+	public static void SetAPX(this RectTransform rectTransform, float x) {
+		rectTransform.anchoredPosition = new Vector2(x, rectTransform.anchoredPosition.y);
+	}
+	public static void SetAPY(this RectTransform rectTransform, float y) {
+		rectTransform.anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, y);
+	}
+
 	public static void SetScaleX(this Transform transform, float x) {
 		transform.localScale = new Vector3(x, transform.localScale.y, transform.localScale.z);
 	}
@@ -88,6 +95,29 @@ public static class Utils {
 
 	public static string ToHex(this Color color) {
 		return "#" + ColorUtility.ToHtmlStringRGBA(color);
+	}
+
+	public static Vector3 GetBottomLeft(this Bounds bounds) {
+		return bounds.min;
+	}
+
+	public static Vector3 GetTopLeft(this Bounds bounds) {
+		return new Vector3(bounds.min.x, 0f, bounds.max.z);
+	}
+
+	public static Vector3 GetTopRight(this Bounds bounds) {
+		return bounds.max;
+	}
+
+	public static Vector3 GetBottomRight(this Bounds bounds) {
+		return new Vector3(bounds.max.x, 0f, bounds.min.z);
+	}
+
+	public static bool Contains(this Bounds bounds, Bounds otherBounds) {
+		return bounds.Contains(otherBounds.GetBottomLeft()) &&
+			bounds.Contains(otherBounds.GetTopLeft()) &&
+			bounds.Contains(otherBounds.GetTopRight()) &&
+			bounds.Contains(otherBounds.GetBottomRight());
 	}
 
 	public static Vector3? GetHitPoint() {

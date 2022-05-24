@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 
 public class Test : MonoBehaviour {
@@ -19,3 +20,4 @@ public class Test : MonoBehaviour {
 		UnityEditor.Handles.Label(t1.position, angle.ToString());
 	}
 }
+#endif

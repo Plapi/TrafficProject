@@ -26,6 +26,8 @@ public class Config : ScriptableObject {
 	public float RoadsMinAngle;
 	public float RoadTextureMap;
 
+	public bool RightDriving;
+
 	public Material RoadMaterial;
 	public Material RoadLineMaterial;
 

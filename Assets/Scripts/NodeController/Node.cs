@@ -108,6 +108,9 @@ public class Node : MonoBehaviour {
 			PerpMidPointToNode(connexions[0], out meshVertices[1], out meshVertices[0]);
 			PerpPointToNode(connexions[0], out meshVertices[3], out meshVertices[2]);
 
+			//meshVertices[2] += (meshVertices[0] - meshVertices[2]).normalized * Config.Instance.RoadHalfWidth;
+			//meshVertices[3] += (meshVertices[1] - meshVertices[3]).normalized * Config.Instance.RoadHalfWidth;
+
 			line.points[0] = meshVertices[0];
 			line.points[1] = meshVertices[2];
 
@@ -136,7 +139,11 @@ public class Node : MonoBehaviour {
 			line.points[^2] = meshVertices[3];
 			line.points[^1] = meshVertices[1];
 
-			nodeMeshLines.UpdateMesh(new NodeMeshLines.Line[1] { line }, true);
+			nodeMeshLines.UpdateExpanderLines(new NodeMeshLines.Line[1] { line }, true);
+			nodeMeshLines.UpdateMiddleLines(new Vector3[2] {
+				Utils.MidPoint(meshVertices[0], meshVertices[1]),
+				pMiddle
+			});
 		} else if (connexions.Count >= 2) {
 
 			Vector3 c0 = transform.InverseTransformPoint(connexions[0].transform.position);
@@ -149,13 +156,17 @@ public class Node : MonoBehaviour {
 				PerpMidPointToNode(connexions[0], out meshVertices[1], out meshVertices[0]);
 				PerpMidPointToNode(connexions[1], out meshVertices[2], out meshVertices[3]);
 
-				nodeMeshLines.UpdateMesh(new NodeMeshLines.Line[2] {
+				nodeMeshLines.UpdateExpanderLines(new NodeMeshLines.Line[2] {
 					new() {
 						points = new Vector3[] { meshVertices[2], meshVertices[0] }
 					},
 					new() {
 						points = new Vector3[] { meshVertices[1], meshVertices[3] }
 					}
+				});
+				nodeMeshLines.UpdateMiddleLines(new Vector3[2] {
+					Utils.MidPoint(meshVertices[0], meshVertices[1]),
+					Utils.MidPoint(meshVertices[2], meshVertices[3]),
 				});
 			} else {
 
@@ -168,11 +179,14 @@ public class Node : MonoBehaviour {
 
 				NodeMeshLines.Line[] lines = new NodeMeshLines.Line[connexions.Count];
 
+				List<Vector3[]> listMiddleLines = null;
+
 				for (int i = 0; i < connexionsClockwise.Count - 1; i++) {
 
 					lines[i] = new NodeMeshLines.Line {
 						points = new Vector3[12]
 					};
+					Vector3[] middleLinesPoints = connexions.Count == 2 ? new Vector3[12] : null;
 
 					Node from = connexionsClockwise[i];
 					Node to = connexionsClockwise[i + 1];
@@ -183,11 +197,19 @@ public class Node : MonoBehaviour {
 					Vector3 c0Mid = Utils.MidPoint(c0, Vector3.zero);
 					Vector3 c1Mid = Utils.MidPoint(c1, Vector3.zero);
 
+					if (middleLinesPoints != null) {
+						middleLinesPoints[0] = c0Mid;
+					}
+
 					Vector3 cp0 = c0.normalized * Mathf.Min(Vector3.Distance(c0Mid, Vector3.zero) - 0.1f, Config.Instance.RoadCurveDist);
 					Vector3 cp1 = c1.normalized * Mathf.Min(Vector3.Distance(c1Mid, Vector3.zero) - 0.1f, Config.Instance.RoadCurveDist);
 
 					PerpMidPointToNode(from, out Vector3 c0Left, out Vector3 c0Right);
 					Utils.PerpendicularPoints(cp0, c0, out Vector3 cp0Right, out Vector3 cp0Left, Config.Instance.RoadHalfWidth);
+
+					if (middleLinesPoints != null) {
+						middleLinesPoints[1] = Utils.MidPoint(c0Left, c0Right);
+					}
 
 					PerpMidPointToNode(to, out Vector3 c1Left, out Vector3 c1Right);
 					Utils.PerpendicularPoints(cp1, c1, out Vector3 cp1Right, out Vector3 cp1Left, Config.Instance.RoadHalfWidth);
@@ -221,6 +243,10 @@ public class Node : MonoBehaviour {
 						if (connexions.Count == 2) {
 							lines[1].points[1 + j] = rightBPoint;
 						}
+
+						if (middleLinesPoints != null) {
+							middleLinesPoints[j + 1] = Utils.MidPoint(rightBPoint, leftBPoint);
+						}
 					}
 
 					meshVertices[index++] = cp1Left;
@@ -235,9 +261,28 @@ public class Node : MonoBehaviour {
 						lines[1].points[^2] = cp1Left;
 						lines[1].points[^1] = c1Left;
 					}
+
+					if (middleLinesPoints != null) {
+						middleLinesPoints[^2] = Utils.MidPoint(c1Left, c1Right);
+						middleLinesPoints[^1] = c1Mid;
+
+						nodeMeshLines.UpdateMiddleLines(middleLinesPoints);
+					} else {
+						if (listMiddleLines == null) {
+							listMiddleLines = new();
+						}
+						listMiddleLines.Add(new Vector3[2] {
+							c0Mid,
+							cp0
+						});
+					}
 				}
 
-				nodeMeshLines.UpdateMesh(lines, true);
+				nodeMeshLines.UpdateExpanderLines(lines, true);
+
+				if (listMiddleLines != null) {
+					nodeMeshLines.UpdateMiddleLines(listMiddleLines);
+				}
 			}
 		}
 
@@ -266,14 +311,14 @@ public class Node : MonoBehaviour {
 			};
 		}
 
-#if UNITY_EDITOR
-		int[] debugTriangles = meshFilter.mesh.triangles;
-		for (int i = 0; i < debugTriangles.Length - 2; i += 3) {
-			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i]], transform.position + meshVertices[debugTriangles[i + 1]], Color.yellow);
-			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 1]], transform.position + meshVertices[debugTriangles[i + 2]], Color.yellow);
-			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 2]], transform.position + meshVertices[debugTriangles[i]], Color.yellow);
-		}
-#endif
+//#if UNITY_EDITOR
+//		int[] debugTriangles = meshFilter.mesh.triangles;
+//		for (int i = 0; i < debugTriangles.Length - 2; i += 3) {
+//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i]], transform.position + meshVertices[debugTriangles[i + 1]], Color.yellow);
+//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 1]], transform.position + meshVertices[debugTriangles[i + 2]], Color.yellow);
+//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 2]], transform.position + meshVertices[debugTriangles[i]], Color.yellow);
+//		}
+//#endif
 
 		meshFilter.mesh.vertices = meshVertices;
 		meshFilter.mesh.RecalculateBounds();
@@ -335,7 +380,7 @@ public class Node : MonoBehaviour {
 
 #if UNITY_EDITOR
 	private void OnDrawGizmos() {
-		Gizmos.color = Color.red;
+		/*Gizmos.color = Color.red;
 		Gizmos.DrawCube(transform.position, Vector3.one * 0.5f);
 
 		connexions.ForEach(cn => {
@@ -349,7 +394,7 @@ public class Node : MonoBehaviour {
 			if (showLabel) {
 				UnityEditor.Handles.Label(transform.position + meshVertices[i], i.ToString());
 			}
-		}
+		}*/
 	}
 #endif
 }

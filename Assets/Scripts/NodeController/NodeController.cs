@@ -241,7 +241,7 @@ public class NodeController : MonoBehaviour {
 		Vector3 from = node0.transform.position;
 		Vector3 to = node1.transform.position + (node1.transform.position - from).normalized * Config.Instance.RoadHalfWidth;
 
-		Debug.DrawLine(from, to, Color.cyan);
+		//Debug.DrawLine(from, to, Color.cyan);
 
 		for (int i = 0; i < nodes.Count; i++) {
 			intNode0 = nodes[i];

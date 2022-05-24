@@ -191,19 +191,13 @@ public static class Utils {
 		p1 = from - cross * distance;
 	}
 
-	public static void Delay(MonoBehaviour behaviour, float delayTime, Action onComplete) {
+	public static void Delay(this MonoBehaviour behaviour, float delay, Action onComplete) {
 		if (behaviour != null) {
-			behaviour.StartCoroutine(Delay(delayTime, onComplete));
+			behaviour.StartCoroutine(Delay(delay, onComplete));
 		}
 	}
 
-	public static void WaitForFrames(MonoBehaviour behaviour, int frames, Action onComplete) {
-		if (behaviour != null) {
-			behaviour.StartCoroutine(WaitForFrames(frames, onComplete));
-		}
-	}
-
-	public static IEnumerator Delay(float delayTime, Action onComplete) {
+	private static IEnumerator Delay(float delayTime, Action onComplete) {
 		if (delayTime <= 0) {
 			yield return null;
 		} else {
@@ -212,10 +206,31 @@ public static class Utils {
 		onComplete?.Invoke();
 	}
 
-	public static void WaitUntil(MonoBehaviour behaviour, Func<bool> predicate, Action onComplete) {
+	public static void EndOfFrame(this MonoBehaviour behaviour, Action onComplete) {
 		if (behaviour != null) {
-			behaviour.StartCoroutine(WaitUntil(predicate, onComplete));
+			behaviour.StartCoroutine(EndOfFrame(onComplete));
 		}
+	}
+
+	private static IEnumerator EndOfFrame(Action onComplete) {
+		yield return new WaitForEndOfFrame();
+		onComplete?.Invoke();
+	}
+
+	public static void WaitForFrames(this MonoBehaviour behaviour, int frames, Action onComplete) {
+		behaviour.StartCoroutine(WaitForFrames(frames, onComplete));
+	}
+
+	public static IEnumerator WaitForFrames(int frames, Action onComplete) {
+		while (frames > 0) {
+			frames--;
+			yield return null;
+		}
+		onComplete?.Invoke();
+	}
+
+	public static void WaitUntil(this MonoBehaviour behaviour, Func<bool> predicate, Action onComplete) {
+		behaviour.StartCoroutine(WaitUntil(predicate, onComplete));
 	}
 
 	public static IEnumerator WaitUntil(Func<bool> predicate, Action onComplete) {
@@ -223,21 +238,19 @@ public static class Utils {
 		onComplete?.Invoke();
 	}
 
-	public static void EndOfFrame(MonoBehaviour behaviour, Action onComplete) {
-		behaviour.StartCoroutine(EndOfFrame(onComplete));
-	}
-
-	public static IEnumerator EndOfFrame(Action onComplete) {
-		yield return new WaitForEndOfFrame();
-		onComplete?.Invoke();
-	}
-
-	public static IEnumerator WaitForFrames(int frames, Action onComplete) {
-		while (frames > 0) {
-			frames--;
-			yield return Delay(0f, null);
+	public static Coroutine LoopAction(this MonoBehaviour behaviour, Action action, float time = 1f) {
+		if (behaviour != null) {
+			return behaviour.StartCoroutine(LoopAction(action, time));
 		}
-		onComplete?.Invoke();
+		return null;
+	}
+
+	private static IEnumerator LoopAction(Action action, float time) {
+		WaitForSeconds waitForSeconds = new WaitForSeconds(time);
+		while (true) {
+			action?.Invoke();
+			yield return waitForSeconds;
+		}
 	}
 
 	public static bool IsOverUI() {

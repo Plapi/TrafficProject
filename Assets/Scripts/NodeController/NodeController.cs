@@ -7,6 +7,8 @@ using UnityEditor;
 
 public class NodeController : MonoBehaviour {
 
+	private const string SAVE_DATA_KEY = "NODES_DATA";
+
 	[SerializeField] private BoxCollider map = default;
 
 	private readonly List<Node> nodes = new();
@@ -17,6 +19,21 @@ public class NodeController : MonoBehaviour {
 
 	public bool CurrentNodeCanBePlaced { get; private set; }
 	public Node CurrentNode => currentNode;
+
+	public void Init() {
+		if (PlayerPrefs.HasKey(SAVE_DATA_KEY)) {
+			NodeData[] nodesData = Utils.Deserialize<NodeData[]>(PlayerPrefs.GetString(SAVE_DATA_KEY));
+			for (int i = 0; i < nodesData.Length; i++) {
+				NewNode(nodesData[i].position.ToVector3());
+			}
+			for (int i = 0; i < nodesData.Length; i++) {
+				for (int j = 0; j < nodesData[i].connexions.Length; j++) {
+					CreateNodesConnexion(nodes[i], nodes[nodesData[i].connexions[j]]);
+				}
+				nodes[i].UpdateMesh();
+			}
+		}
+	}
 
 	public void UpdateController() {
 		if (!GetRaycastPoint(out Vector3 point)) {
@@ -95,6 +112,7 @@ public class NodeController : MonoBehaviour {
 			virtualNode = null;
 		}
 		currentNode = prevNode = null;
+		SaveDada();
 	}
 
 	public void DismissCurrentNode() {
@@ -126,6 +144,7 @@ public class NodeController : MonoBehaviour {
 			Destroy(nodes[i].gameObject);
 		}
 		nodes.Clear();
+		SaveDada();
 	}
 
 	public void Demolish() {
@@ -143,6 +162,7 @@ public class NodeController : MonoBehaviour {
 				}
 			}
 			RemoveNode(nearNode);
+			SaveDada();
 		} else {
 			for (int i = 0; i < nodes.Count; i++) {
 				if (nodes[i].HasConnectionBetween(point, out Node connexion)) {
@@ -160,6 +180,7 @@ public class NodeController : MonoBehaviour {
 					break;
 				}
 			}
+			SaveDada();
 		}
 	}
 
@@ -315,6 +336,36 @@ public class NodeController : MonoBehaviour {
 
 		}
 		return false;
+	}
+
+	public void SaveDada() {
+		NodeData[] nodesData = new NodeData[nodes.Count];
+		for (int i = 0; i < nodesData.Length; i++) {
+			nodesData[i] = new() {
+				position = JSONVector3.FromVector3(nodes[i].transform.position)
+			};
+			List<Node> connexions = nodes[i].GetConnexions();
+			nodesData[i].connexions = new int[connexions.Count];
+			for (int j = 0; j < nodesData[i].connexions.Length; j++) {
+				int index = nodes.IndexOf(connexions[j]);
+				if (index != -1) {
+					nodesData[i].connexions[j] = index;
+				} else {
+					Debug.LogError($"Index not found for {connexions[j]}");
+				}
+			}
+		}
+		PlayerPrefs.SetString(SAVE_DATA_KEY, Utils.Serialize(nodesData));
+		PlayerPrefs.Save();
+	}
+
+	public static void DeleteData() {
+		PlayerPrefs.DeleteKey(SAVE_DATA_KEY);
+	}
+
+	private class NodeData {
+		public JSONVector3 position;
+		public int[] connexions;
 	}
 
 #if UNITY_EDITOR

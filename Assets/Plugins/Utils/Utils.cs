@@ -507,3 +507,21 @@ public static class Utils {
 		return a + Vector3.Project(p - a, b - a);
 	}
 }
+
+public class JSONVector3 {
+	public float x;
+	public float y;
+	public float z;
+
+	public Vector3 ToVector3() {
+		return new Vector3(x, y, z);
+	}
+
+	public static JSONVector3 FromVector3(Vector3 v3) {
+		return new JSONVector3 {
+			x = v3.x,
+			y = v3.y,
+			z = v3.z
+		};
+	}
+}

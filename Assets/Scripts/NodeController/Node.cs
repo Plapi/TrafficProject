@@ -32,8 +32,12 @@ public class Node : MonoBehaviour {
 	}
 
 	public void Connect(Node node) {
-		connexions.Add(node);
-		node.connexions.Add(this);
+		if (!connexions.Contains(node)) {
+			connexions.Add(node);
+		}
+		if (!node.connexions.Contains(this)) {
+			node.connexions.Add(this);
+		}
 	}
 
 	public void Disconnect(Node node) {
@@ -311,14 +315,14 @@ public class Node : MonoBehaviour {
 			};
 		}
 
-//#if UNITY_EDITOR
-//		int[] debugTriangles = meshFilter.mesh.triangles;
-//		for (int i = 0; i < debugTriangles.Length - 2; i += 3) {
-//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i]], transform.position + meshVertices[debugTriangles[i + 1]], Color.yellow);
-//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 1]], transform.position + meshVertices[debugTriangles[i + 2]], Color.yellow);
-//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 2]], transform.position + meshVertices[debugTriangles[i]], Color.yellow);
-//		}
-//#endif
+		//#if UNITY_EDITOR
+		//		int[] debugTriangles = meshFilter.mesh.triangles;
+		//		for (int i = 0; i < debugTriangles.Length - 2; i += 3) {
+		//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i]], transform.position + meshVertices[debugTriangles[i + 1]], Color.yellow);
+		//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 1]], transform.position + meshVertices[debugTriangles[i + 2]], Color.yellow);
+		//			Debug.DrawLine(transform.position + meshVertices[debugTriangles[i + 2]], transform.position + meshVertices[debugTriangles[i]], Color.yellow);
+		//		}
+		//#endif
 
 		meshFilter.mesh.vertices = meshVertices;
 		meshFilter.mesh.RecalculateBounds();

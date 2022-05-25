@@ -64,6 +64,8 @@ public class GameController : MonoBehaviour {
 		cameraButton.onClick.AddListener(() => {
 			cameraController.ChangeOrto();
 		});
+
+		nodeController.Init();
 	}
 
 	private void Update() {

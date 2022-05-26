@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,6 +34,53 @@ public class NodeController : MonoBehaviour {
 				nodes[i].UpdateMesh();
 			}
 		}
+	}
+
+	public List<Node> GetAllNodes() {
+		return nodes;
+	}
+
+	public void IterateAllConnexions(Action<Node, Node> action) {
+		nodes.ForEach(n0 => {
+			n0.GetConnexions().ForEach(n1 => {
+				action(n0, n1);
+			});
+		});
+	}
+
+	public void GetNavigationPointsBetween(Node node0, Node node1, out NavigationPoint[] navPoints) {
+		navPoints = new NavigationPoint[4];
+
+		List<NavigationPoint> points0 = new(node0.GetNavigationLeftPoints());
+		points0.AddRange(node0.GetNavigationRightPoints());
+
+		List<NavigationPoint> points1 = new(node1.GetNavigationLeftPoints());
+		points1.AddRange(node1.GetNavigationRightPoints());
+
+		(NavigationPoint, NavigationPoint) getGlosestPoints() {
+			(NavigationPoint, NavigationPoint) group = (points0[0], points1[0]);
+			float dist = Vector3.Distance(group.Item1.Position, group.Item2.Position);
+			for (int i = 0; i < points0.Count; i++) {
+				for (int j = 0; j < points1.Count; j++) {
+					float d = Vector3.Distance(points0[i].Position, points1[j].Position);
+					if (dist > d) {
+						group = (points0[i], points1[j]);
+						dist = d;
+					}
+				}
+			}
+			return group;
+		}
+
+		(NavigationPoint, NavigationPoint) closestPoints = getGlosestPoints();
+		points0.Remove(closestPoints.Item1);
+		points0.Remove(closestPoints.Item2);
+		navPoints[0] = closestPoints.Item1;
+		navPoints[1] = closestPoints.Item2;
+
+		closestPoints = getGlosestPoints();
+		navPoints[2] = closestPoints.Item1;
+		navPoints[3] = closestPoints.Item2;
 	}
 
 	public void UpdateController() {

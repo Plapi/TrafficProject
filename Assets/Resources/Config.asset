@@ -21,3 +21,4 @@ MonoBehaviour:
   RoadMaterial: {fileID: 2100000, guid: 540b94c770f89490c96f4b9e7030f9fb, type: 2}
   RoadWrongMaterial: {fileID: 2100000, guid: f6281279728c247f8a55c1fa072cb39e, type: 2}
   RoadSideMarkMaterial: {fileID: 2100000, guid: 0f3fe908b37a24051b9cb7993f583fc1, type: 2}
+  RoadBase: {fileID: 2100000, guid: f2d92c07d167a44719241b9d9f54cbeb, type: 2}

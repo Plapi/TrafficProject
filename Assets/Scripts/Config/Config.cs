@@ -31,6 +31,7 @@ public class Config : ScriptableObject {
 	public Material RoadMaterial;
 	public Material RoadWrongMaterial;
 	public Material RoadSideMarkMaterial;
+	public Material RoadBase;
 
 	private float roadHalfWidth;
 	private float roadDoubleWidth;

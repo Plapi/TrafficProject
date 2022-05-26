@@ -9,6 +9,11 @@ public class Node : MonoBehaviour {
 	private readonly List<Node> connexions = new();
 	private Vector3[] meshVertices = new Vector3[0];
 
+	private NavigationPoint[] navigationRightPoints = new NavigationPoint[0];
+	private NavigationPoint[] navigationLeftPoints = new NavigationPoint[0];
+	private Vector3[] navigationDirectionRightPoints = new Vector3[0];
+	private Vector3[] navigationDirectionLeftPoints = new Vector3[0];
+
 	private MeshRenderer meshRenderer;
 	private MeshFilter meshFilter;
 	private NodeMeshLines nodeMeshLines;
@@ -29,6 +34,22 @@ public class Node : MonoBehaviour {
 
 	public List<Node> GetConnexions() {
 		return connexions;
+	}
+
+	public NavigationPoint[] GetNavigationRightPoints() {
+		return navigationRightPoints;
+	}
+
+	public NavigationPoint[] GetNavigationLeftPoints() {
+		return navigationLeftPoints;
+	}
+
+	public Vector3[] GetNavigationDirectionRightPoints() {
+		return navigationDirectionRightPoints;
+	}
+
+	public Vector3[] GetNavigationDirectionLeftPoints() {
+		return navigationDirectionLeftPoints;
 	}
 
 	public void Connect(Node node) {
@@ -103,6 +124,8 @@ public class Node : MonoBehaviour {
 		if (connexions.Count == 1) {
 			if (meshVertices.Length != SINGLE_CONNEXION_VERT_LENGTH) {
 				meshVertices = new Vector3[SINGLE_CONNEXION_VERT_LENGTH];
+				navigationRightPoints = new NavigationPoint[1];
+				navigationLeftPoints = new NavigationPoint[1];
 			}
 
 			NodeMeshLines.Line line = new() {
@@ -148,6 +171,9 @@ public class Node : MonoBehaviour {
 				Utils.MidPoint(meshVertices[0], meshVertices[1]),
 				pMiddle
 			});
+
+			navigationRightPoints[0] = new(transform.position + Utils.MidPoint(Vector3.zero, meshVertices[3]));
+			navigationLeftPoints[0] = new(transform.position + Utils.MidPoint(Vector3.zero, meshVertices[2]));
 		} else if (connexions.Count >= 2) {
 
 			Vector3 c0 = transform.InverseTransformPoint(connexions[0].transform.position);
@@ -156,6 +182,8 @@ public class Node : MonoBehaviour {
 			if (connexions.Count == 2 && !Utils.Intersection2D(c0, -c0.normalized, c1, -c1.normalized, out _)) {
 				if (meshVertices.Length != SINGLE_CONNEXION_VERT_LENGTH) {
 					meshVertices = new Vector3[SINGLE_CONNEXION_VERT_LENGTH];
+					navigationRightPoints = new NavigationPoint[1];
+					navigationLeftPoints = new NavigationPoint[1];
 				}
 				PerpMidPointToNode(connexions[0], out meshVertices[1], out meshVertices[0]);
 				PerpMidPointToNode(connexions[1], out meshVertices[2], out meshVertices[3]);
@@ -172,12 +200,21 @@ public class Node : MonoBehaviour {
 					Utils.MidPoint(meshVertices[0], meshVertices[1]),
 					Utils.MidPoint(meshVertices[2], meshVertices[3]),
 				});
+
+				Utils.PerpendicularPoints(transform.position, connexions[0].transform.position,
+					out Vector3 nvrp0, out Vector3 nvrp1, Config.Instance.RoadHalfWidth / 2f);
+				navigationRightPoints[0] = new(nvrp0);
+				navigationLeftPoints[0] = new(nvrp1);
 			} else {
 
 				List<Node> connexionsClockwise = GetConnexionsClockwise();
 				int verticesLength = (connexionsClockwise.Count - 1) * MULTIPLE_CONNEXION_VERT_LENGTH;
 				if (meshVertices.Length != verticesLength) {
 					meshVertices = new Vector3[verticesLength];
+					navigationRightPoints = new NavigationPoint[connexions.Count];
+					navigationLeftPoints = new NavigationPoint[connexions.Count];
+					navigationDirectionRightPoints = new Vector3[connexions.Count];
+					navigationDirectionLeftPoints = new Vector3[connexions.Count];
 				}
 				int index = 0;
 
@@ -218,8 +255,14 @@ public class Node : MonoBehaviour {
 					PerpMidPointToNode(to, out Vector3 c1Left, out Vector3 c1Right);
 					Utils.PerpendicularPoints(cp1, c1, out Vector3 cp1Right, out Vector3 cp1Left, Config.Instance.RoadHalfWidth);
 
-					Vector3 interRight = Intersection(cp0Right, (cp0Right - c0Right).normalized, cp1Left, (cp1Left - c1Left).normalized);
-					Vector3 interLeft = Intersection(cp1Right, (cp1Right - c1Right).normalized, cp0Left, (cp0Left - c0Left).normalized);
+					Vector3 interRight = Utils.Intersection(cp0Right, (cp0Right - c0Right).normalized, cp1Left, (cp1Left - c1Left).normalized);
+					Vector3 interLeft = Utils.Intersection(cp1Right, (cp1Right - c1Right).normalized, cp0Left, (cp0Left - c0Left).normalized);
+
+					navigationRightPoints[i] = new(transform.position + Utils.MidPoint(cp0, cp0Right));
+					navigationLeftPoints[i] = new(transform.position + Utils.MidPoint(cp0, cp0Left));
+
+					navigationDirectionRightPoints[i] = -cp0.normalized;
+					navigationDirectionLeftPoints[i] = -cp0.normalized;
 
 					meshVertices[index++] = c0Right;
 					meshVertices[index++] = c0Left;
@@ -264,6 +307,11 @@ public class Node : MonoBehaviour {
 					if (connexions.Count == 2) {
 						lines[1].points[^2] = cp1Left;
 						lines[1].points[^1] = c1Left;
+						navigationRightPoints[1] = new(transform.position + Utils.MidPoint(cp1, cp1Right));
+						navigationLeftPoints[1] = new(transform.position + Utils.MidPoint(cp1, cp1Left));
+
+						navigationDirectionRightPoints[1] = -cp1.normalized;
+						navigationDirectionLeftPoints[1] = -cp1.normalized;
 					}
 
 					if (middleLinesPoints != null) {
@@ -356,13 +404,6 @@ public class Node : MonoBehaviour {
 		return closestNode != null ? closestNode : nodes[0];
 	}
 
-	private Vector3 Intersection(Vector3 v0, Vector3 d0, Vector3 v1, Vector3 d1) {
-		if (Math3d.LineLineIntersection(out Vector3 intersection, v0, d0, v1, d1)) {
-			return intersection;
-		}
-		return Utils.MidPoint(v0, v1);
-	}
-
 	private void PerpPointToNode(Node node, out Vector3 right, out Vector3 left) {
 		Vector3 dir = node.transform.position - transform.position;
 		Vector3 cross = Vector3.Cross(dir, Vector3.up).normalized;
@@ -384,6 +425,14 @@ public class Node : MonoBehaviour {
 
 #if UNITY_EDITOR
 	private void OnDrawGizmos() {
+		Gizmos.color = Color.green;
+		for (int i = 0; i < navigationRightPoints.Length; i++) {
+			Gizmos.DrawCube(navigationRightPoints[i].Position, Vector3.one * 0.25f);
+		}
+		Gizmos.color = Color.red;
+		for (int i = 0; i < navigationLeftPoints.Length; i++) {
+			Gizmos.DrawCube(navigationLeftPoints[i].Position, Vector3.one * 0.25f);
+		}
 		/*Gizmos.color = Color.red;
 		Gizmos.DrawCube(transform.position, Vector3.one * 0.5f);
 

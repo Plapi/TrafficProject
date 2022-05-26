@@ -25,7 +25,7 @@ public class NodeMeshLines : MonoBehaviour {
 				thirdLines[i] = NewExpander($"third{i}");
 				firstLines[i].SetMaterial(Config.Instance.RoadSideMarkMaterial);
 				secondLines[i].SetMaterial(Config.Instance.RoadMaterial);
-				thirdLines[i].SetMaterial(Config.Instance.RoadSideMarkMaterial);
+				thirdLines[i].SetMaterial(Config.Instance.RoadBase);
 			}
 		}
 		for (int i = 0; i < lines.Length; i++) {

@@ -3,16 +3,33 @@ using UnityEngine;
 
 public class NavigationController : MonoBehaviour {
 
-	private List<NavigationPoint> points = new();
+	private NavigationPoint[] points;
+	private int[][] adjacents;
 
-	public void Init(List<NavigationPoint> points) {
-		this.points = points;
+	public void SetPoints(List<NavigationPoint> points) {
+		this.points = points.ToArray();
+		adjacents = BFS<NavigationPoint>.GetAdjacents(this.points);
+		TestPath();
+	}
+
+	private void TestPath() {
+		if (BFS<NavigationPoint>.FindPath(points, adjacents, points[0], points[^1], out List<NavigationPoint> path)) {
+			for (int i = 0; i < path.Count - 1; i++) {
+				Debug.DrawLine(path[i].Position, path[i + 1].Position, Color.green, float.MaxValue);
+			}
+		} else {
+			Debug.LogError("Path not found");
+		}
 	}
 
 #if UNITY_EDITOR
+	[SerializeField] private bool drawGizmos = default;
 	private void OnDrawGizmos() {
+		if (!drawGizmos) {
+			return;
+		}
 
-		for (int i = 0; i < points.Count; i++) {
+		for (int i = 0; i < points.Length; i++) {
 
 			NavigationPoint from = points[i];
 			BFSNode[] nextNodes = points[i].GetNextNodes();

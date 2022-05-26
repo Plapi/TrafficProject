@@ -424,7 +424,12 @@ public class Node : MonoBehaviour {
 	}
 
 #if UNITY_EDITOR
+	[SerializeField] private bool drawGizmos = default;
 	private void OnDrawGizmos() {
+		if (!drawGizmos) {
+			return;
+		}
+
 		Gizmos.color = Color.green;
 		for (int i = 0; i < navigationRightPoints.Length; i++) {
 			Gizmos.DrawCube(navigationRightPoints[i].Position, Vector3.one * 0.25f);
@@ -433,7 +438,8 @@ public class Node : MonoBehaviour {
 		for (int i = 0; i < navigationLeftPoints.Length; i++) {
 			Gizmos.DrawCube(navigationLeftPoints[i].Position, Vector3.one * 0.25f);
 		}
-		/*Gizmos.color = Color.red;
+
+		Gizmos.color = Color.red;
 		Gizmos.DrawCube(transform.position, Vector3.one * 0.5f);
 
 		connexions.ForEach(cn => {
@@ -447,7 +453,7 @@ public class Node : MonoBehaviour {
 			if (showLabel) {
 				UnityEditor.Handles.Label(transform.position + meshVertices[i], i.ToString());
 			}
-		}*/
+		}
 	}
 #endif
 }

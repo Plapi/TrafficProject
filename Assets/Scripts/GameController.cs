@@ -179,6 +179,6 @@ public class GameController : MonoBehaviour {
 			}
 		});
 
-		navigationController.Init(points);
+		navigationController.SetPoints(points);
 	}
 }

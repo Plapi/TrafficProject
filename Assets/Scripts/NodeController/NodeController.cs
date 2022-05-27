@@ -2,15 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 public class NodeController : MonoBehaviour {
 
 	private const string SAVE_DATA_KEY = "NODES_DATA";
 
 	[SerializeField] private BoxCollider map = default;
+	[SerializeField] private List<PointOfInterest> pointOfInterests = default;
 
 	private readonly List<Node> nodes = new();
 
@@ -22,22 +19,37 @@ public class NodeController : MonoBehaviour {
 	public Node CurrentNode => currentNode;
 
 	public void Init() {
+
+		for (int i = 0; i < pointOfInterests.Count; i++) {
+			pointOfInterests[i].HeadNode.SetNode(true, true);
+			pointOfInterests[i].OtherNode.SetNode(true, false);
+			nodes.Add(pointOfInterests[i].HeadNode);
+			nodes.Add(pointOfInterests[i].OtherNode);
+			CreateNodesConnexion(pointOfInterests[i].HeadNode, pointOfInterests[i].OtherNode);
+		}
+
 		if (PlayerPrefs.HasKey(SAVE_DATA_KEY)) {
 			NodeData[] nodesData = Utils.Deserialize<NodeData[]>(PlayerPrefs.GetString(SAVE_DATA_KEY));
 			for (int i = 0; i < nodesData.Length; i++) {
 				NewNode(nodesData[i].position.ToVector3());
 			}
+			int staticNodesCount = pointOfInterests.Count * 2;
 			for (int i = 0; i < nodesData.Length; i++) {
 				for (int j = 0; j < nodesData[i].connexions.Length; j++) {
-					CreateNodesConnexion(nodes[i], nodes[nodesData[i].connexions[j]]);
+					CreateNodesConnexion(nodes[i + staticNodesCount], nodes[nodesData[i].connexions[j]]);
 				}
-				nodes[i].UpdateMesh();
 			}
 		}
+
+		nodes.ForEach(n => n.UpdateMesh());
 	}
 
 	public List<Node> GetAllNodes() {
 		return nodes;
+	}
+
+	public List<PointOfInterest> GetPointOfInterests() {
+		return pointOfInterests;
 	}
 
 	public void IterateAllConnexions(Action<Node, Node> action) {
@@ -145,7 +157,8 @@ public class NodeController : MonoBehaviour {
 		}
 
 		CurrentNodeCanBePlaced = prevNode.HasAcceptedDistance(currentNode) &&
-			prevNode.HasAcceptedAngle(currentNode) && currentNode.HasAcceptedAngle(prevNode);
+			prevNode.HasAcceptedAngle(currentNode) && currentNode.HasAcceptedAngle(prevNode) &&
+			!IntersectAnyRestrictedArea(prevNode, currentNode);
 
 		currentNode.UpdateHighlightColor(CurrentNodeCanBePlaced);
 		prevNode.UpdateHighlightColor(CurrentNodeCanBePlaced);
@@ -200,6 +213,9 @@ public class NodeController : MonoBehaviour {
 			return;
 		}
 		if (TryGetNearNode(point, out Node nearNode)) {
+			if (nearNode.IsStaticNode) {
+				return;
+			}
 			List<Node> nodeConnexions = new(nearNode.GetConnexions());
 			for (int i = 0; i < nodeConnexions.Count; i++) {
 				RemoveNodesConnexion(nearNode, nodeConnexions[i]);
@@ -213,7 +229,7 @@ public class NodeController : MonoBehaviour {
 			SaveDada();
 		} else {
 			for (int i = 0; i < nodes.Count; i++) {
-				if (nodes[i].HasConnectionBetween(point, out Node connexion)) {
+				if (!nodes[i].IsHeadNode && nodes[i].HasConnectionBetween(point, out Node connexion) && !connexion.IsHeadNode) {
 					RemoveNodesConnexion(nodes[i], connexion);
 					if (nodes[i].ConnexionsCount == 0) {
 						RemoveNode(nodes[i]);
@@ -262,6 +278,9 @@ public class NodeController : MonoBehaviour {
 		nearNode = default;
 		float nearNodeDist = float.MaxValue;
 		for (int i = 0; i < nodes.Count; i++) {
+			if (nodes[i].IsHeadNode) {
+				continue;
+			}
 			float dist = Vector3.Distance(point, nodes[i].transform.position);
 			if (dist < Config.Instance.RoadDoubleWidth && nearNodeDist > dist) {
 				nearNode = nodes[i];
@@ -276,7 +295,7 @@ public class NodeController : MonoBehaviour {
 		float dist = 0f;
 
 		for (int i = 0; i < nodes.Count; i++) {
-			if (nodes[i] != currentNode && nodes[i] != prevNode) {
+			if (nodes[i] != currentNode && nodes[i] != prevNode && !nodes[i].IsHeadNode) {
 				if (IsNodeBetweenOtherNodes(nodes[i], currentNode, prevNode)) {
 					if (intersectionNode == null) {
 						intersectionNode = nodes[i];
@@ -295,16 +314,25 @@ public class NodeController : MonoBehaviour {
 		return intersectionNode != null;
 	}
 
+	private bool IntersectAnyRestrictedArea(Node node0, Node node1) {
+		for (int i = 0; i < pointOfInterests.Count; i++) {
+			if (pointOfInterests[i].IntersectRestrictedArea(node0, node1)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static bool IsNodeBetweenOtherNodes(Node node, Node otherNode0, Node otherNode1) {
 		Utils.PerpendicularPoints(otherNode0.transform.position, otherNode1.transform.position, out Vector3 p0, out Vector3 p1, Config.Instance.RoadWidth);
 		Utils.PerpendicularPoints(otherNode1.transform.position, otherNode0.transform.position, out Vector3 p2, out Vector3 p3, Config.Instance.RoadWidth);
 
 		Vector3[] points = new Vector3[5] {
 			node.transform.position,
-			node.transform.position + (Vector3.forward + Vector3.left) * Config.Instance.RoadHalfWidth,
-			node.transform.position + (Vector3.forward + Vector3.right) * Config.Instance.RoadHalfWidth,
-			node.transform.position + (Vector3.back + Vector3.left) * Config.Instance.RoadHalfWidth,
-			node.transform.position + (Vector3.back + Vector3.right) * Config.Instance.RoadHalfWidth
+			node.transform.position + (Vector3.forward + Vector3.left) * Config.Instance.RoadWidth,
+			node.transform.position + (Vector3.forward + Vector3.right) * Config.Instance.RoadWidth,
+			node.transform.position + (Vector3.back + Vector3.left) * Config.Instance.RoadWidth,
+			node.transform.position + (Vector3.back + Vector3.right) * Config.Instance.RoadWidth
 		};
 
 		return Utils.PolyContainsAnyPoint(p0, p1, p2, p3, points);
@@ -322,13 +350,13 @@ public class NodeController : MonoBehaviour {
 
 		for (int i = 0; i < nodes.Count; i++) {
 			intNode0 = nodes[i];
-			if (intNode0 == node0 || intNode0 == node1) {
+			if (intNode0.IsHeadNode || intNode0 == node0 || intNode0 == node1) {
 				continue;
 			}
 			List<Node> connexions = nodes[i].GetConnexions();
 			for (int j = 0; j < connexions.Count; j++) {
 				intNode1 = connexions[j];
-				if (intNode1 == node0 || intNode1 == node1) {
+				if (intNode1.IsHeadNode || intNode1 == node0 || intNode1 == node1) {
 					continue;
 				}
 				if (Utils.TryGetIntersection(out intersection, from, to, intNode0.transform.position, intNode1.transform.position)) {
@@ -387,12 +415,19 @@ public class NodeController : MonoBehaviour {
 	}
 
 	public void SaveDada() {
-		NodeData[] nodesData = new NodeData[nodes.Count];
+		List<Node> nonStaticNodes = new(nodes.Count - pointOfInterests.Count * 2);
+		nodes.ForEach(node => {
+			if (!node.IsStaticNode) {
+				nonStaticNodes.Add(node);
+			}
+		});
+
+		NodeData[] nodesData = new NodeData[nonStaticNodes.Count];
 		for (int i = 0; i < nodesData.Length; i++) {
 			nodesData[i] = new() {
-				position = JSONVector3.FromVector3(nodes[i].transform.position)
+				position = JSONVector3.FromVector3(nonStaticNodes[i].transform.position)
 			};
-			List<Node> connexions = nodes[i].GetConnexions();
+			List<Node> connexions = nonStaticNodes[i].GetConnexions();
 			nodesData[i].connexions = new int[connexions.Count];
 			for (int j = 0; j < nodesData[i].connexions.Length; j++) {
 				int index = nodes.IndexOf(connexions[j]);
@@ -417,18 +452,12 @@ public class NodeController : MonoBehaviour {
 	}
 
 #if UNITY_EDITOR
-	public void OnInspectorGUI() {
-
+	private void OnDrawGizmos() {
+		for (int i = 0; i < pointOfInterests.Count; i++) {
+			pointOfInterests[i].name = $"PointOfInterest{i}";
+			pointOfInterests[i].HeadNode.name = $"node_static_head_{i}";
+			pointOfInterests[i].OtherNode.name = $"node_static_{i}";
+		}
 	}
 #endif
 }
-
-#if UNITY_EDITOR
-[CustomEditor(typeof(NodeController))]
-public class NodeControllerEditor : Editor {
-	public override void OnInspectorGUI() {
-		base.OnInspectorGUI();
-		((NodeController)target).OnInspectorGUI();
-	}
-}
-#endif

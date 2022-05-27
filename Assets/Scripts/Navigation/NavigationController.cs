@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,40 +7,50 @@ public class NavigationController : MonoBehaviour {
 	private NavigationPoint[] points;
 	private int[][] adjacents;
 
-	public void SetPoints(List<NavigationPoint> points) {
+	private List<PointOfInterest> pointOfInterests;
+
+	public void SetPoints(List<NavigationPoint> points, List<PointOfInterest> pointOfInterests) {
 		this.points = points.ToArray();
 		adjacents = BFS<NavigationPoint>.GetAdjacents(this.points);
 
-		StartTraveAgent(points[0], points[73]);
-		StartTraveAgent(points[72], points[1]);
-		StartTraveAgent(points[14], points[33]);
-		StartTraveAgent(points[32], points[15]);
-		StartTraveAgent(points[50], points[36]);
-		StartTraveAgent(points[30], points[46]);
+		this.pointOfInterests = pointOfInterests;
+
+		StartCoroutine(SpawnAgent());
 	}
 
-	private void StartTraveAgent(NavigationPoint from, NavigationPoint to) {
+	private IEnumerator SpawnAgent() {
+		while (true) {
+			yield return new WaitForSeconds(Utils.Random(1, 3));
+			PointOfInterest start = pointOfInterests.Random();
+			PointOfInterest end = GetRandomPointofInterest(start);
+			TravelAgent(start.StartNavigationPoint, end.EndNavigationPoint);
+		}
+	}
+
+	private void TravelAgent(NavigationPoint from, NavigationPoint to) {
 		if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
 			NavigationAgent agent = Instantiate(Resources.Load<NavigationAgent>("Cars/Car0"));
 			agent.transform.parent = transform;
-			TravelAgentOnPath(agent, path);
+			agent.Go(path, () => {
+				this.Delay(1f, () => {
+					Destroy(agent.gameObject);
+				});
+			});
 		} else {
 			Debug.LogError("Path not found");
 		}
 	}
 
-	private void TravelAgentOnPath(NavigationAgent agent, List<NavigationPoint> path) {
-		this.Delay(1f, () => {
-			agent.Go(path, () => {
-				TravelAgentOnPath(agent, path);
-			});
-		});
+	private PointOfInterest GetRandomPointofInterest(PointOfInterest exlude) {
+		List<PointOfInterest> list = new(pointOfInterests);
+		list.Remove(exlude);
+		return list.Random();
 	}
 
 #if UNITY_EDITOR
 	[SerializeField] private bool drawGizmos = default;
 	private void OnDrawGizmos() {
-		if (!drawGizmos) {
+		if (!drawGizmos || !Application.isPlaying) {
 			return;
 		}
 

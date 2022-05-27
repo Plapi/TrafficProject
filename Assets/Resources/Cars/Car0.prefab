@@ -141,7 +141,7 @@ MonoBehaviour:
   rotationSpeed: 2
   frontSize: 2.2
   backSize: 2
-  keepDistance: 0.5
+  keepDistance: 2
   currentSpeed: 15
 --- !u!33 &2412732625806634875
 MeshFilter:

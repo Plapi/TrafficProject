@@ -179,6 +179,6 @@ public class GameController : MonoBehaviour {
 			}
 		});
 
-		navigationController.SetPoints(points);
+		navigationController.SetPoints(points, nodeController.GetPointOfInterests());
 	}
 }

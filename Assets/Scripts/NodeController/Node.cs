@@ -20,6 +20,9 @@ public class Node : MonoBehaviour {
 
 	public int ConnexionsCount => connexions.Count;
 
+	[HideInInspector] public bool IsStaticNode { get; private set; }
+	[HideInInspector] public bool IsHeadNode { get; private set; }
+
 	private void Awake() {
 		meshRenderer = new GameObject("mesh").AddComponent<MeshRenderer>();
 		meshRenderer.transform.parent = transform;
@@ -28,8 +31,11 @@ public class Node : MonoBehaviour {
 		meshFilter = meshRenderer.gameObject.AddComponent<MeshFilter>();
 
 		nodeMeshLines = gameObject.AddComponent<NodeMeshLines>();
-		nodeMeshLines.transform.parent = transform;
-		nodeMeshLines.transform.localPosition = Vector3.zero;
+	}
+
+	public void SetNode(bool isStatic, bool isHead) {
+		IsStaticNode = isStatic;
+		IsHeadNode = isHead;
 	}
 
 	public List<Node> GetConnexions() {

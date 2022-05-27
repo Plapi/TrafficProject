@@ -16,11 +16,13 @@ public class Config : ScriptableObject {
 	private void Init() {
 		roadHalfWidth = RoadWidth / 2f;
 		roadDoubleWidth = RoadWidth * 2f;
+		roadQuadrupleWidth = RoadWidth * 4f;
 	}
 
 	public float RoadWidth;
 	public float RoadHalfWidth => roadHalfWidth;
 	public float RoadDoubleWidth => roadDoubleWidth;
+	public float RoadQuadrupleWidth => roadQuadrupleWidth;
 	public float RoadCurveDist;
 	public float RoadHeight;
 	public float RoadsMinAngle;
@@ -35,4 +37,5 @@ public class Config : ScriptableObject {
 
 	private float roadHalfWidth;
 	private float roadDoubleWidth;
+	private float roadQuadrupleWidth;
 }

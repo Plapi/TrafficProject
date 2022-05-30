@@ -10,6 +10,8 @@ public class NavigationPoint : BFSNode {
 	public int Index { get => index; set => index = value; }
 	public Vector3 Position;
 
+	private readonly List<NavigationAgent> agents = new();
+
 	public NavigationPoint(Vector3 position) {
 		Position = position;
 	}
@@ -45,5 +47,17 @@ public class NavigationPoint : BFSNode {
 			}
 		}
 		return false;
+	}
+
+	public void AddAgent(NavigationAgent agent) {
+		agents.Add(agent);
+	}
+
+	public void RemoveAgent(NavigationAgent agent) {
+		agents.Remove(agent);
+	}
+
+	public List<NavigationAgent> GetAgents() {
+		return agents;
 	}
 }

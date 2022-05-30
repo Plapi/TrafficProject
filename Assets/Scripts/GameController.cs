@@ -18,7 +18,7 @@ public class GameController : MonoBehaviour {
 	private bool updateConfirmRoadPanelPos;
 	private bool updateNode;
 
-	private void Awake() {
+	private void Start() {
 		topPanel.Init(() => {
 			topPanel.Hide();
 			buildingRoadPanel.Show(() => {

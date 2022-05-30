@@ -520,6 +520,25 @@ public static class Utils {
 		return PolyContainsAnyPoint(polyPoints, points);
 	}
 
+	public static bool PointInTriangle(Vector3 p, Vector3 a, Vector3 b, Vector3 c) {
+		return PointInTriangle(new Vector2(p.x, p.z), new Vector2(a.x, a.z), new Vector2(b.x, b.z), new Vector2(c.x, c.z));
+	}
+
+	private static bool PointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c) {
+		Vector2 d, e;
+		double w1, w2;
+		d = b - a;
+		e = c - a;
+
+		if (Mathf.Approximately(e.y, 0)) {
+			e.y = 0.0001f;
+		}
+
+		w1 = (e.x * (a.y - p.y) + e.y * (p.x - a.x)) / (d.x * e.y - d.y * e.x);
+		w2 = (p.y - a.y - w1 * d.y) / e.y;
+		return (w1 >= 0f) && (w2 >= 0.0) && ((w1 + w2) <= 1.0);
+	}
+
 	public static bool PolyContainsAnyPoint(Point2D[] polyPoints, Vector3[] points) {
 		Point2D[] points2D = new Point2D[points.Length];
 		for (int i = 0; i < points2D.Length; i++) {

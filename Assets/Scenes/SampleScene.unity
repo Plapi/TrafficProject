@@ -1019,7 +1019,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3085f920818394537b127ff1dd10e463, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drawGizmos: 0
+  drawGizmos: 1
 --- !u!4 &508859929
 Transform:
   m_ObjectHideFlags: 0

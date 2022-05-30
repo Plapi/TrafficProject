@@ -4,34 +4,53 @@ using UnityEngine;
 
 public class NavigationController : MonoBehaviour {
 
-	private NavigationPoint[] points;
+	private NavigationPoint[] points = new NavigationPoint[0];
 	private int[][] adjacents;
 
 	private List<PointOfInterest> pointOfInterests;
 	private readonly Dictionary<string, List<NavigationPoint>> conflictPoints = new();
 
-	public readonly List<NavigationAgent> agents = new();
+	private readonly Dictionary<string, List<NavigationPoint>> paths = new();
+	private readonly List<NavigationAgent> agents = new();
+
+	private int totalAgents;
 
 	public void SetPoints(List<NavigationPoint> points, List<PointOfInterest> pointOfInterests) {
 		this.points = points.ToArray();
 		this.pointOfInterests = pointOfInterests;
+
 		adjacents = BFS<NavigationPoint>.GetAdjacents(this.points);
+
 		SetConflictPoints();
-		StartCoroutine(SpawnAgentsCorutine());
+		SetPaths();
+
+		this.Delay(2f, () => StartCoroutine(SpawnAgentsCorutine()));
+	}
+
+	public void Stop() {
+		conflictPoints.Clear();
+		paths.Clear();
+		for (int i = 0; i < agents.Count; i++) {
+			agents[i].Destroy();
+		}
+		agents.Clear();
+		totalAgents = 0;
+		StopAllCoroutines();
 	}
 
 	private IEnumerator SpawnAgentsCorutine() {
 		while (true) {
-			yield return new WaitForSeconds(Utils.Random(1, 3));
 			SpawnAgents();
+			yield return new WaitForSeconds(3f);
 		}
 	}
 
 	private void SpawnAgents() {
+		if (agents.Count >= 50) {
+			return;
+		}
 		for (int i = 0; i < pointOfInterests.Count; i++) {
-			PointOfInterest start = pointOfInterests[i];
-			PointOfInterest end = GetRandomPointofInterest(start);
-			TravelAgent(start.StartNavigationPoint, end.EndNavigationPoint);
+			TravelAgent(pointOfInterests[i]);
 		}
 	}
 
@@ -58,10 +77,8 @@ public class NavigationController : MonoBehaviour {
 				for (int j = 0; j < cPoints.Count; j++) {
 					if (AgentCollidesWithOthers(agents[i], cPoints[j].GetAgents(), out NavigationAgent otherAgent1)
 						&& otherAgent1.BlockedByOtherAgent != agents[i]) {
-
 						agents[i].BlockedByOtherAgent = otherAgent1;
 						Debug.DrawLine(agents[i].transform.position, otherAgent1.transform.position, Color.blue);
-
 						break;
 					} else {
 						agents[i].BlockedByOtherAgent = null;
@@ -122,27 +139,51 @@ public class NavigationController : MonoBehaviour {
 		return false;
 	}
 
-	private void TravelAgent(NavigationPoint from, NavigationPoint to) {
-		if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
-			NavigationAgent agent = Instantiate(Resources.Load<NavigationAgent>("Cars/Car0"));
-			agent.name = $"agent{agents.Count}";
-			agent.transform.parent = transform;
-			agent.Go(path, () => {
-				this.Delay(1f, () => {
-					agents.Remove(agent);
-					agent.Destroy();
-				});
+	private void TravelAgent(PointOfInterest start) {
+
+		PointOfInterest end = GetRandomPointofInterest(start);
+		List<NavigationPoint> path = paths[start.name + "_" + end.name];
+
+		NavigationAgent agent = Instantiate(Resources.Load<NavigationAgent>("Cars/Car0"));
+		agent.name = $"agent{totalAgents}";
+		agent.transform.parent = transform;
+		agent.Go(path, () => {
+			this.Delay(1f, () => {
+				agents.Remove(agent);
+				agent.Destroy();
 			});
-			agents.Add(agent);
-		} else {
-			Debug.LogError("Path not found");
-		}
+		});
+		agents.Add(agent);
+		totalAgents++;
 	}
 
 	private PointOfInterest GetRandomPointofInterest(PointOfInterest exlude) {
 		List<PointOfInterest> list = new(pointOfInterests);
 		list.Remove(exlude);
 		return list.Random();
+	}
+
+	private void SetPaths() {
+		for (int i = 0; i < pointOfInterests.Count; i++) {
+			PointOfInterest start = pointOfInterests[i];
+			for (int j = 0; j < pointOfInterests.Count; j++) {
+				if (i != j) {
+					PointOfInterest end = pointOfInterests[j];
+
+					NavigationPoint from = start.StartNavigationPoint;
+					NavigationPoint to = end.EndNavigationPoint;
+
+					if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
+						paths.Add(start.name + "_" + end.name, path);
+					} else {
+						Debug.LogError($"Path not found {start.name} {from.Index}, {to.Index} {end.name}");
+						Debug.DrawLine(from.Position, to.Position, Color.red);
+						Debug.Break();
+					}
+				}
+			}
+
+		}
 	}
 
 	private void SetConflictPoints() {
@@ -187,11 +228,18 @@ public class NavigationController : MonoBehaviour {
 							if (!conflictPoints[key1].Contains(nextPoints0[j])) {
 								conflictPoints[key1].Add(nextPoints0[j]);
 							}
+
+							//if (points[i].Index == 46 && nextPoints0[j].Index == 53) {
+							//Debug.DrawLine(a0, a1, Color.red);
+							//Debug.DrawLine(b0, b1, Color.red);
+							//}
 						}
 					}
 				}
 			}
 		}
+
+		//Debug.Break();
 	}
 
 #if UNITY_EDITOR

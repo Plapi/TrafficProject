@@ -16,8 +16,10 @@ public class CameraController : MonoBehaviour {
 	private Action tapAction;
 
 #if UNITY_EDITOR || UNITY_STANDALONE
-	private Vector3? m_prevMousePosition;
+	private Vector3? prevMousePosition;
 #endif
+
+	public int TouchesCount => GTouch.TouchesCount;
 
 	public void SetMoveEnable(bool enable) {
 		allowMoving = enable;
@@ -51,25 +53,21 @@ public class CameraController : MonoBehaviour {
 	}
 
 	public void Update() {
-		if (!allowMoving) {
-			return;
-		}
-
 #if UNITY_EDITOR || UNITY_STANDALONE
 		bool fixCameraPos = false;
 
 		if (Input.GetMouseButton(1) || Input.GetMouseButton(2)) {
-			if (m_prevMousePosition != null) {
-				Vector3 rotate = (Vector3)m_prevMousePosition - Input.mousePosition;
+			if (prevMousePosition != null) {
+				Vector3 rotate = (Vector3)prevMousePosition - Input.mousePosition;
 				Vector3 pos1 = PlanePosition(new Vector2(Screen.width / 2f, Screen.height / 2f));
 				cam.transform.RotateAround(pos1, Vector3.up, -rotate.x / 5f);
 			}
-			m_prevMousePosition = Input.mousePosition;
+			prevMousePosition = Input.mousePosition;
 			fixCameraPos = true;
 		}
 
 		if (Input.GetMouseButtonUp(1) || Input.GetMouseButton(2)) {
-			m_prevMousePosition = null;
+			prevMousePosition = null;
 		}
 
 		float scrollDelta = Input.mouseScrollDelta.y;
@@ -94,21 +92,23 @@ public class CameraController : MonoBehaviour {
 
 		plane.SetNormalAndPosition(transform.up, transform.position);
 
-		if (touches[0].Phase == TouchPhase.Began || touches[0].Phase == TouchPhase.Moved) {
-			isOverUI = Utils.IsOverUI();
-			if (touches[0].Phase == TouchPhase.Began) {
-				firstTouch = touches[0];
-			} else if (!isOverUI) {
-				cam.transform.Translate(PlanePositionDelta(touches[0]), Space.World);
+		if (allowMoving) {
+			if (touches[0].Phase == TouchPhase.Began || touches[0].Phase == TouchPhase.Moved) {
+				isOverUI = Utils.IsOverUI();
+				if (touches[0].Phase == TouchPhase.Began) {
+					firstTouch = touches[0];
+				} else if (!isOverUI) {
+					cam.transform.Translate(PlanePositionDelta(touches[0]), Space.World);
+				}
+			} else if (touches[0].Phase == TouchPhase.Ended && touches[1] == null) {
+				if (tapAction != null && IsTap(touches[0])) {
+					tapAction();
+				}
 			}
-		} else if (touches[0].Phase == TouchPhase.Ended && touches[1] == null) {
-			if (tapAction != null && IsTap(touches[0])) {
-				tapAction();
-			}
-		}
 
-		if (isOverUI) {
-			return;
+			if (isOverUI) {
+				return;
+			}
 		}
 
 		if (touches[1] != null) {
@@ -180,6 +180,18 @@ public class CameraController : MonoBehaviour {
 		public float Time { get; private set; }
 
 		private static readonly GTouch[] touches = new GTouch[2];
+
+		public static int TouchesCount {
+			get {
+				if (touches[0] != null) {
+					if (touches[1] != null) {
+						return 2;
+					}
+					return 1;
+				}
+				return 0;
+			}
+		}
 
 #if UNITY_EDITOR || UNITY_STANDALONE
 		private static Vector3 prevMousePos;

@@ -8,8 +8,9 @@ public class UITopPanel : UIItem {
 	[SerializeField] private Button roadButton = default;
 	[SerializeField] private Button demolishButton = default;
 	[SerializeField] private Button intersectionButton = default;
+	[SerializeField] private Button playButton = default;
 
-	public void Init(Action onRoadButton, Action onDemolishButton, Action onIntersectionButton) {
+	public void Init(Action onRoadButton, Action onDemolishButton, Action onIntersectionButton, Action onPlayButton) {
 		roadButton.onClick.AddListener(() => {
 			onRoadButton?.Invoke();
 		});
@@ -18,6 +19,9 @@ public class UITopPanel : UIItem {
 		});
 		intersectionButton.onClick.AddListener(() => {
 			onIntersectionButton?.Invoke();
+		});
+		playButton.onClick.AddListener(() => {
+			onPlayButton?.Invoke();
 		});
 	}
 

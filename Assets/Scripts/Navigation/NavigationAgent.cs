@@ -89,9 +89,9 @@ public class NavigationAgent : MonoBehaviour {
 
 	private void Update() {
 		if (BlockedByOtherAgent == null) {
-			currentSpeed += acceleration;
+			currentSpeed += acceleration * Time.deltaTime;
 		} else {
-			currentSpeed -= deceleration;
+			currentSpeed -= deceleration * Time.deltaTime;
 		}
 		currentSpeed = Mathf.Clamp(currentSpeed, 0f, maxSpeed);
 

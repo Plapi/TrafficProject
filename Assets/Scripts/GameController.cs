@@ -12,6 +12,8 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private UIBuildRoadPanel buildingRoadPanel = default;
 	[SerializeField] private UIConfirmRoadPanel confirmRoadPanel = default;
 	[SerializeField] private UIEraseRoadPanel eraseRoadPanel = default;
+	[SerializeField] private UIPlayModePanel playModePanel = default;
+	[SerializeField] private UIIntersectionPanel intersectionPanel = default;
 
 	[SerializeField] private Button cameraButton = default;
 
@@ -32,7 +34,16 @@ public class GameController : MonoBehaviour {
 			});
 			eraseRoadPanel.Show();
 		}, () => {
+			topPanel.Hide();
+			intersectionPanel.Show(() => {
 
+			});
+		}, () => {
+			topPanel.Hide();
+			SetNavigationPoints();
+			playModePanel.Show(() => {
+
+			});
 		});
 
 		buildingRoadPanel.Init(() => {
@@ -40,8 +51,14 @@ public class GameController : MonoBehaviour {
 				cameraController.SetMoveEnable(true);
 			});
 			buildingRoadPanel.Hide();
+			if (nodeController.CurrentNode != null) {
+				if (nodeController.CurrentNodeCanBePlaced) {
+					nodeController.ApplyCurrentNode();
+				} else {
+					nodeController.DismissCurrentNode();
+				}
+			}
 			nodeController.enabled = false;
-			nodeController.ApplyCurrentNode();
 			if (confirmRoadPanel.gameObject.activeSelf) {
 				confirmRoadPanel.Hide();
 			}
@@ -63,19 +80,36 @@ public class GameController : MonoBehaviour {
 			cameraController.SetTapAction(null);
 		});
 
+		intersectionPanel.Init(() => {
+			topPanel.Show(() => {
+
+			});
+			intersectionPanel.Hide();
+		});
+
+		playModePanel.Init(() => {
+			topPanel.Show(() => {
+
+			});
+			playModePanel.Hide();
+			navigationController.Stop();
+		}, () => {
+
+		}, () => {
+
+		});
+
 		cameraButton.onClick.AddListener(() => {
 			cameraController.ChangeOrto();
 		});
 
 		nodeController.Init();
-
-		SetNavigationPoints();
 	}
 
 	private void Update() {
 		if (nodeController.enabled) {
 
-			if (!Utils.IsOverUI()) {
+			if (!Utils.IsOverUI() && cameraController.TouchesCount < 2) {
 				if (Input.GetMouseButtonDown(0)) {
 					updateNode = nodeController.CurrentNode == null || nodeController.IsMouseInputCloseToCurrentNode();
 					cameraController.SetMoveEnable(!updateNode);
@@ -87,7 +121,7 @@ public class GameController : MonoBehaviour {
 				}
 			}
 
-			if (updateNode && Input.GetMouseButtonUp(0)) {
+			if (updateNode && Input.GetMouseButtonUp(0) && nodeController.CurrentNodesHasMinDistance) {
 				confirmRoadPanel.Show();
 				updateConfirmRoadPanelPos = true;
 				updateNode = false;

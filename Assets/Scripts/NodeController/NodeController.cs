@@ -18,6 +18,9 @@ public class NodeController : MonoBehaviour {
 	public bool CurrentNodeCanBePlaced { get; private set; }
 	public Node CurrentNode => currentNode;
 
+	public bool CurrentNodesHasMinDistance => currentNode != null && prevNode != null &&
+		Vector3.Distance(currentNode.transform.position, prevNode.transform.position) > Config.Instance.RoadHalfWidth;
+
 	public void Init() {
 
 		for (int i = 0; i < pointOfInterests.Count; i++) {

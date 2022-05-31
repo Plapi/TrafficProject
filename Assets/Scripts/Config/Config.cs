@@ -30,6 +30,10 @@ public class Config : ScriptableObject {
 
 	public bool RightDriving;
 
+	public int DefaultSemaphoreTimer;
+	public int MinSemaphoreTimer;
+	public int MaxSemaphoreTimer;
+
 	public Material RoadMaterial;
 	public Material RoadWrongMaterial;
 	public Material RoadSideMarkMaterial;

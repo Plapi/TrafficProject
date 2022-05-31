@@ -37,10 +37,11 @@ public class GameController : MonoBehaviour {
 			topPanel.Hide();
 			intersectionPanel.Show(() => {
 
-			});
+			}, nodeController.GetIntersections());
 		}, () => {
 			topPanel.Hide();
 			SetNavigationPoints();
+			nodeController.StartIntersectionsWithSemaphore();
 			playModePanel.Show(() => {
 
 			});
@@ -81,6 +82,7 @@ public class GameController : MonoBehaviour {
 		});
 
 		intersectionPanel.Init(() => {
+			nodeController.SaveDada();
 			topPanel.Show(() => {
 
 			});
@@ -93,6 +95,7 @@ public class GameController : MonoBehaviour {
 			});
 			playModePanel.Hide();
 			navigationController.Stop();
+			nodeController.StopIntersectionsWithSemaphores();
 		}, () => {
 
 		}, () => {

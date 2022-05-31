@@ -10,6 +10,9 @@ public class NavigationPoint : BFSNode {
 	public int Index { get => index; set => index = value; }
 	public Vector3 Position;
 
+	public bool GivesWay { get; private set; }
+	public bool StopedbySemaphore { get; private set; }
+
 	private readonly List<NavigationAgent> agents = new();
 
 	public NavigationPoint(Vector3 position) {
@@ -59,5 +62,13 @@ public class NavigationPoint : BFSNode {
 
 	public List<NavigationAgent> GetAgents() {
 		return agents;
+	}
+
+	public void UpdateGiveWay(bool giveWay) {
+		GivesWay = giveWay;
+	}
+
+	public void UpdateStopedbySemaphore(bool stopedbySemaphore) {
+		StopedbySemaphore = stopedbySemaphore;
 	}
 }

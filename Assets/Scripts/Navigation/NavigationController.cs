@@ -28,6 +28,7 @@ public class NavigationController : MonoBehaviour {
 	}
 
 	public void Stop() {
+		points = new NavigationPoint[0];
 		conflictPoints.Clear();
 		paths.Clear();
 		for (int i = 0; i < agents.Count; i++) {
@@ -56,6 +57,15 @@ public class NavigationController : MonoBehaviour {
 
 	private void LateUpdate() {
 
+		if (Input.GetKeyDown(KeyCode.B)) {
+			for (int i = 0; i < points.Length; i++) {
+				List<NavigationAgent> agents = points[i].GetAgents();
+				if (agents.Count > 0) {
+					Debug.LogError("agents count:" + agents.Count);
+				}
+			}
+		}
+
 		if (Input.GetKeyDown(KeyCode.A)) {
 			SpawnAgents();
 		}
@@ -65,7 +75,7 @@ public class NavigationController : MonoBehaviour {
 				&& otherAgent0.BlockedByOtherAgent != agents[i]) {
 
 				agents[i].BlockedByOtherAgent = otherAgent0;
-				Debug.DrawLine(agents[i].transform.position, otherAgent0.transform.position, Color.yellow);
+				//Debug.DrawLine(agents[i].transform.position, otherAgent0.transform.position, Color.yellow);
 
 				continue;
 			} else {
@@ -76,9 +86,9 @@ public class NavigationController : MonoBehaviour {
 			if (conflictPoints.TryGetValue(key, out List<NavigationPoint> cPoints)) {
 				for (int j = 0; j < cPoints.Count; j++) {
 					if (AgentCollidesWithOthers(agents[i], cPoints[j].GetAgents(), out NavigationAgent otherAgent1)
-						&& otherAgent1.BlockedByOtherAgent != agents[i]) {
+						&& otherAgent1.BlockedByOtherAgent != agents[i] && !otherAgent1.CurrentNavPoint.GivesWay) {
 						agents[i].BlockedByOtherAgent = otherAgent1;
-						Debug.DrawLine(agents[i].transform.position, otherAgent1.transform.position, Color.blue);
+						//Debug.DrawLine(agents[i].transform.position, otherAgent1.transform.position, Color.blue);
 						break;
 					} else {
 						agents[i].BlockedByOtherAgent = null;

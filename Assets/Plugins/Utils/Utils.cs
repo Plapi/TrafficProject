@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
 using JsonFx.Json;
+using TMPro;
 using Poly2Tri;
 
 public static class Utils {
@@ -93,6 +95,26 @@ public static class Utils {
 		transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
 	}
 
+	public static bool TryGetChild(this Transform transform, int index, out Transform child) {
+		child = null;
+		if (transform.childCount > index) {
+			child = transform.GetChild(index);
+			return true;
+		}
+		return false;
+	}
+
+	public static bool TryGetChild(this Transform transform, string name, out Transform child) {
+		child = null;
+		foreach (Transform t in transform) {
+			if (t.name == name) {
+				child = t;
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static string ToHex(this Color color) {
 		return "#" + ColorUtility.ToHtmlStringRGBA(color);
 	}
@@ -118,6 +140,65 @@ public static class Utils {
 			bounds.Contains(otherBounds.GetTopLeft()) &&
 			bounds.Contains(otherBounds.GetTopRight()) &&
 			bounds.Contains(otherBounds.GetBottomRight());
+	}
+
+	public static void SetAction(this Button button, Action action) {
+		button.onClick.RemoveAllListeners();
+		button.onClick.AddListener(() => action?.Invoke());
+	}
+
+	public static void SetText(this Button button, string text) {
+		if (button.transform.TryGetChild(0, out Transform child)) {
+			if (child.TryGetComponent(out Text unityText)) {
+				unityText.text = text;
+			} else if (child.TryGetComponent(out TextMeshProUGUI textMeshProUI)) {
+				textMeshProUI.text = text;
+			} else {
+				Debug.LogError("Text component not found");
+			}
+		} else {
+			Debug.LogError("Child not found");
+		}
+	}
+
+	public static void SetAlpha(this Image image, float alpha) {
+		image.color = new Color(image.color.r, image.color.g, image.color.b, alpha);
+	}
+
+	public static Texture2D ToTexture2D(this Texture texture) {
+		Texture2D texture2D = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
+
+		RenderTexture currentRT = RenderTexture.active;
+
+		RenderTexture renderTexture = new RenderTexture(texture.width, texture.height, 32);
+		Graphics.Blit(texture, renderTexture);
+
+		RenderTexture.active = renderTexture;
+		texture2D.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+		texture2D.Apply();
+
+		RenderTexture.active = currentRT;
+
+		return texture2D;
+	}
+
+	public static Texture2D Rotate(this Texture2D texture, bool clockwise) {
+		Color32[] original = texture.GetPixels32();
+		Color32[] rotated = new Color32[original.Length];
+		int w = texture.width;
+		int h = texture.height;
+		int iRotated, iOriginal;
+		for (int j = 0; j < h; ++j) {
+			for (int i = 0; i < w; ++i) {
+				iRotated = (i + 1) * h - j - 1;
+				iOriginal = clockwise ? original.Length - 1 - (j * w + i) : j * w + i;
+				rotated[iRotated] = original[iOriginal];
+			}
+		}
+		Texture2D rotatedTexture = new Texture2D(h, w);
+		rotatedTexture.SetPixels32(rotated);
+		rotatedTexture.Apply();
+		return rotatedTexture;
 	}
 
 	public static Vector3? GetHitPoint() {

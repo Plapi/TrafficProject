@@ -36,6 +36,6 @@ public class UIConfirmRoadPanel : UIItem {
 	}
 
 	public void UpdateAnchorPos(Transform tr) {
-		RectTransform.anchoredPosition = Utils.WorldPositionToUI(tr.position, transform.parent.GetComponent<RectTransform>());
+		RectTransform.anchoredPosition = Utils.WorldPositionToUI(tr.position, MainCanvas);
 	}
 }

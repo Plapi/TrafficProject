@@ -42,13 +42,48 @@ public class NodeController : MonoBehaviour {
 					CreateNodesConnexion(nodes[i + staticNodesCount], nodes[nodesData[i].connexions[j]]);
 				}
 			}
-		}
 
-		nodes.ForEach(n => n.UpdateMesh());
+			nodes.ForEach(n => n.UpdateMesh());
+
+			for (int i = 0; i < nodesData.Length; i++) {
+				if (nodes[i + staticNodesCount].ConnexionsCount > 2) {
+					NavigationPoint[] inputPoints = Config.Instance.RightDriving ?
+					nodes[i + staticNodesCount].GetNavigationRightPoints() : nodes[i + staticNodesCount].GetNavigationLeftPoints();
+					nodes[i + staticNodesCount].UpdateSemaphore(nodesData[i].intersection.semaphore);
+					for (int j = 0; j < inputPoints.Length; j++) {
+						nodes[i + staticNodesCount].UpdateGiveWay(j, nodesData[i].intersection.giveWayInputs[j]);
+					}
+				}
+			}
+		} else {
+			nodes.ForEach(n => n.UpdateMesh());
+		}
+	}
+
+	public void StartIntersectionsWithSemaphore() {
+		GetIntersections().ForEach(intersection => {
+			if (intersection.GetSemaphoreData().isOn) {
+				intersection.StartSemaphores();
+			}
+		});
+	}
+
+	public void StopIntersectionsWithSemaphores() {
+		nodes.ForEach(n => n.StopSemaphores());
 	}
 
 	public List<Node> GetAllNodes() {
 		return nodes;
+	}
+
+	public List<Node> GetIntersections() {
+		List<Node> intersections = new();
+		nodes.ForEach(node => {
+			if (node.ConnexionsCount > 2) {
+				intersections.Add(node);
+			}
+		});
+		return intersections;
 	}
 
 	public List<PointOfInterest> GetPointOfInterests() {
@@ -440,6 +475,17 @@ public class NodeController : MonoBehaviour {
 					Debug.LogError($"Index not found for {connexions[j]}");
 				}
 			}
+			if (connexions.Count > 2) {
+				NavigationPoint[] inputPoints = Config.Instance.RightDriving ?
+					nonStaticNodes[i].GetNavigationRightPoints() : nonStaticNodes[i].GetNavigationLeftPoints();
+				IntersectionData intersectionData = new();
+				intersectionData.giveWayInputs = new bool[inputPoints.Length];
+				for (int j = 0; j < intersectionData.giveWayInputs.Length; j++) {
+					intersectionData.giveWayInputs[j] = inputPoints[j].GivesWay;
+				}
+				intersectionData.semaphore = nonStaticNodes[i].GetSemaphoreData();
+				nodesData[i].intersection = intersectionData;
+			}
 		}
 		PlayerPrefs.SetString(SAVE_DATA_KEY, Utils.Serialize(nodesData));
 		PlayerPrefs.Save();
@@ -452,6 +498,7 @@ public class NodeController : MonoBehaviour {
 	private class NodeData {
 		public JSONVector3 position;
 		public int[] connexions;
+		public IntersectionData intersection;
 	}
 
 #if UNITY_EDITOR
@@ -463,4 +510,14 @@ public class NodeController : MonoBehaviour {
 		}
 	}
 #endif
+}
+
+public class IntersectionData {
+	public bool[] giveWayInputs;
+	public SemaphoreData semaphore;
+}
+
+public class SemaphoreData {
+	public bool isOn;
+	public int[] timers;
 }

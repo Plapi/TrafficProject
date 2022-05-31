@@ -88,10 +88,17 @@ public class NavigationAgent : MonoBehaviour {
 	}
 
 	private void Update() {
-		if (BlockedByOtherAgent == null) {
-			currentSpeed += acceleration * Time.deltaTime;
-		} else {
+		bool shouldStop = false;
+		if (BlockedByOtherAgent != null) {
+			shouldStop = true;
+		} else if (nextNavPoint.StopedbySemaphore && Vector3.Distance(transform.position, nextNavPoint.Position) < (frontDistance + frontSize)) {
+			shouldStop = true;
+		}
+
+		if (shouldStop) {
 			currentSpeed -= deceleration * Time.deltaTime;
+		} else {
+			currentSpeed += acceleration * Time.deltaTime;
 		}
 		currentSpeed = Mathf.Clamp(currentSpeed, 0f, maxSpeed);
 
@@ -120,8 +127,8 @@ public class NavigationAgent : MonoBehaviour {
 			(navPointsIndexes[currentIndex + 1] + 1) : navPointsIndexes[currentIndex + 1];
 		NavigationPoint nnp = navPoints[nextIndex];
 		if (cnv != currentNavPoint || nnp != nextNavPoint) {
-			cnv.RemoveAgent(this);
-			nnp.RemoveAgent(this);
+			currentNavPoint.RemoveAgent(this);
+			nextNavPoint.RemoveAgent(this);
 
 			currentNavPoint = cnv;
 			nextNavPoint = nnp;

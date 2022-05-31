@@ -50,4 +50,14 @@ public class UIItem : MonoBehaviour {
 			return worldCorners[1].x;
 		}
 	}
+
+	private static RectTransform mainCanvas;
+	public static RectTransform MainCanvas {
+		get {
+			if (mainCanvas == null) {
+				mainCanvas = FindObjectOfType<Canvas>().GetComponent<RectTransform>();
+			}
+			return mainCanvas;
+		}
+	}
 }

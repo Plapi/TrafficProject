@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,13 +24,19 @@ public class Node : MonoBehaviour {
 	[HideInInspector] public bool IsStaticNode { get; private set; }
 	[HideInInspector] public bool IsHeadNode { get; private set; }
 
+	private SemaphoreData semaphoreData;
+	private int semaphoreIndex;
+	private Coroutine semaphoresRoutine;
+
+	private readonly List<GameObject> giveWayObjects = new();
+	private readonly List<Semaphore> semaphores = new();
+
 	private void Awake() {
 		meshRenderer = new GameObject("mesh").AddComponent<MeshRenderer>();
 		meshRenderer.transform.parent = transform;
 		meshRenderer.transform.localPosition = Vector3.zero;
 		UpdateHighlightColor(true);
 		meshFilter = meshRenderer.gameObject.AddComponent<MeshFilter>();
-
 		nodeMeshLines = gameObject.AddComponent<NodeMeshLines>();
 	}
 
@@ -40,6 +47,123 @@ public class Node : MonoBehaviour {
 
 	public List<Node> GetConnexions() {
 		return connexions;
+	}
+
+	public void UpdateSemaphore(SemaphoreData semaphoreData) {
+		this.semaphoreData = semaphoreData;
+		UpdateSemaphores();
+	}
+
+	public void StartSemaphores() {
+		semaphoresRoutine = StartCoroutine(SemaphoresRoutine());
+	}
+
+	public void StopSemaphores() {
+		if (semaphoresRoutine != null) {
+			StopCoroutine(semaphoresRoutine);
+			semaphoresRoutine = null;
+
+			NavigationPoint[] inputPoints = Config.Instance.RightDriving ? navigationRightPoints : navigationLeftPoints;
+			for (int i = 0; i < inputPoints.Length; i++) {
+				inputPoints[i].UpdateStopedbySemaphore(false);
+			}
+		}
+	}
+
+	private IEnumerator SemaphoresRoutine() {
+		while (true) {
+			NavigationPoint[] inputPoints = Config.Instance.RightDriving ? navigationRightPoints : navigationLeftPoints;
+			for (int i = 0; i < inputPoints.Length; i++) {
+				inputPoints[i].UpdateStopedbySemaphore(i != semaphoreIndex);
+			}
+
+			yield return new WaitForSeconds(semaphoreData.timers[semaphoreIndex]);
+
+			semaphoreIndex++;
+			if (semaphoreIndex >= inputPoints.Length) {
+				semaphoreIndex = 0;
+			}
+		}
+	}
+
+	public void UpdateSemaphores() {
+		SemaphoreData semaphoreData = GetSemaphoreData();
+		NavigationPoint[] inputPoints = Config.Instance.RightDriving ? navigationRightPoints : navigationLeftPoints;
+		NavigationPoint[] outputPoints = Config.Instance.RightDriving ? navigationLeftPoints : navigationRightPoints;
+
+		for (int i = 0; i < inputPoints.Length; i++) {
+			Semaphore semaphore = GetSemaphore(i);
+			if (semaphoreData.isOn) {
+				Vector3 dir = (inputPoints[i].Position - outputPoints[i].Position).normalized;
+				semaphore.transform.position = inputPoints[i].Position + dir * (Config.Instance.RoadHalfWidth / 2f + 0.4f);
+				semaphore.transform.localRotation = Quaternion.LookRotation(dir);
+				semaphore.transform.SetLocalAngleY(semaphore.transform.localEulerAngles.y + 90f);
+				semaphore.gameObject.SetActive(true);
+			} else {
+				semaphore.gameObject.SetActive(false);
+			}
+		}
+	}
+
+	public SemaphoreData GetSemaphoreData() {
+		if (semaphoreData == null || semaphoreData.timers.Length != connexions.Count) {
+			semaphoreData = new();
+			semaphoreData.timers = new int[connexions.Count];
+			for (int i = 0; i < semaphoreData.timers.Length; i++) {
+				semaphoreData.timers[i] = Config.Instance.DefaultSemaphoreTimer;
+			}
+		}
+		return semaphoreData;
+	}
+
+	private Semaphore GetSemaphore(int index) {
+		for (int i = index; i <= index; i++) {
+			Semaphore semaphore = Instantiate(Resources.Load<Semaphore>("RoadSigns/Semaphore"), transform);
+			semaphore.name = $"Semaphore{index}";
+			semaphore.gameObject.SetActive(false);
+			semaphores.Add(semaphore);
+		}
+		return semaphores[index];
+	}
+
+	public void UpdateGiveWay(int pointIndex, bool giveWay) {
+		NavigationPoint[] inputPoints = Config.Instance.RightDriving ? navigationRightPoints : navigationLeftPoints;
+		inputPoints[pointIndex].UpdateGiveWay(giveWay);
+		UpdateGiveWay(pointIndex);
+	}
+
+	private void UpdateGiveWay(int pointIndex) {
+		NavigationPoint[] inputPoints = Config.Instance.RightDriving ? navigationRightPoints : navigationLeftPoints;
+		NavigationPoint[] outputPoints = Config.Instance.RightDriving ? navigationLeftPoints : navigationRightPoints;
+		GameObject giveWayObj = GetGiveWayObject(pointIndex);
+		if (!GetSemaphoreData().isOn && inputPoints[pointIndex].GivesWay) {
+			giveWayObj.SetActive(true);
+			Vector3 dir = (inputPoints[pointIndex].Position - outputPoints[pointIndex].Position).normalized;
+			giveWayObj.transform.position = inputPoints[pointIndex].Position + dir * (Config.Instance.RoadHalfWidth / 2f + 0.4f);
+			giveWayObj.transform.localRotation = Quaternion.LookRotation(dir);
+			giveWayObj.transform.SetLocalAngleY(giveWayObj.transform.localEulerAngles.y + 90f);
+		} else {
+			giveWayObj.SetActive(false);
+		}
+	}
+
+	private GameObject GetGiveWayObject(int index) {
+		for (int i = giveWayObjects.Count; i <= index; i++) {
+			GameObject obj = Instantiate(Resources.Load<GameObject>("RoadSigns/GiveWay"), transform);
+			obj.name = $"GiveWay{index}";
+			obj.SetActive(false);
+			giveWayObjects.Add(obj);
+		}
+		return giveWayObjects[index];
+	}
+
+	public void UpdateGiveWaysObjects() {
+		for (int i = 0; i < giveWayObjects.Count; i++) {
+			giveWayObjects[i].SetActive(false);
+		}
+		for (int i = 0; i < navigationRightPoints.Length; i++) {
+			UpdateGiveWay(i);
+		}
 	}
 
 	public NavigationPoint[] GetNavigationRightPoints() {
@@ -380,6 +504,9 @@ public class Node : MonoBehaviour {
 
 		meshFilter.mesh.vertices = meshVertices;
 		meshFilter.mesh.RecalculateBounds();
+
+		UpdateGiveWaysObjects();
+		UpdateSemaphores();
 	}
 
 	private List<Node> GetConnexionsClockwise() {

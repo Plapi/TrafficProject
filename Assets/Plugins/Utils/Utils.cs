@@ -65,11 +65,32 @@ public static class Utils {
 		transform.localPosition = new Vector3(x, y, z);
 	}
 
-	public static void SetAPX(this RectTransform rectTransform, float x) {
+	public static void SetSizeX(this RectTransform rectTransform, float x) {
+		rectTransform.sizeDelta = new Vector2(x, rectTransform.sizeDelta.y);
+	}
+	public static void SetSizeY(this RectTransform rectTransform, float y) {
+		rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, y);
+	}
+
+	public static void SetAnchorX(this RectTransform rectTransform, float x) {
 		rectTransform.anchoredPosition = new Vector2(x, rectTransform.anchoredPosition.y);
 	}
-	public static void SetAPY(this RectTransform rectTransform, float y) {
+	public static void SetAnchorY(this RectTransform rectTransform, float y) {
 		rectTransform.anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, y);
+	}
+
+	public static void SetOffsetMinX(this RectTransform rectTransform, float x) {
+		rectTransform.offsetMin = new Vector2(x, rectTransform.offsetMin.y);
+	}
+	public static void SetOffsetMinY(this RectTransform rectTransform, float y) {
+		rectTransform.offsetMin = new Vector2(rectTransform.offsetMin.x, y);
+	}
+
+	public static void SetOffsetMaxX(this RectTransform rectTransform, float x) {
+		rectTransform.offsetMax = new Vector2(x, rectTransform.offsetMax.y);
+	}
+	public static void SetOffsetMaxY(this RectTransform rectTransform, float y) {
+		rectTransform.offsetMax = new Vector2(rectTransform.offsetMax.x, y);
 	}
 
 	public static void SetScaleX(this Transform transform, float x) {

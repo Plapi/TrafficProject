@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using DG.Tweening;
 
-public class CameraController : MonoBehaviour {
+public class CameraController : MonoBehaviourSingleton<CameraController> {
 
 	[SerializeField] private Camera cam = default;
 

@@ -4,45 +4,45 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
-public class UIIntersectionPanel : UIItem {
+public class UIIntersectionView : UIView<UIIntersectionView.Data> {
 
-	[SerializeField] private Button backButton = default;
 	[SerializeField] private UIIntersection uiIntersection = default;
 
 	[SerializeField] private float minVisibleDistance = default;
 
 	private readonly List<UIIntersection> uiIntersections = new();
-	private List<Node> intersections = new();
 
-	public void Init(Action onBackButton) {
-		backButton.onClick.AddListener(() => {
-			onBackButton?.Invoke();
-		});
-	}
-
-	public void Show(Action onComplete, List<Node> intersections) {
-		gameObject.SetActive(true);
-		RectTransform.DOAnchorPosY(0f, 0.25f).OnComplete(() => {
-			onComplete?.Invoke();
-		});
-
-		this.intersections = intersections;
+	public override void OnInit() {
+		base.OnInit();
 		CreateSemaphoreButtons();
 		Update();
 	}
 
-	public void Hide() {
-		RectTransform.DOAnchorPosY(100f, 0.25f).OnComplete(() => {
-			gameObject.SetActive(false);
+	public override void OnBack() {
+		UIController.Instance.HideCurrentView(() => {
+			DataValue.onBack?.Invoke();
 		});
 		ClearSemaphoreButtons();
 	}
 
+	public override void ShowAnim(Action onComplete = null) {
+		RectTransform.SetAnchorY(100f);
+		RectTransform.DOAnchorPosY(0f, TRANS_TIME).OnComplete(() => {
+			onComplete?.Invoke();
+		});
+	}
+
+	public override void HideAnim(Action onComplete = null) {
+		RectTransform.DOAnchorPosY(100f, TRANS_TIME).OnComplete(() => {
+			onComplete?.Invoke();
+		});
+	}
+
 	private void CreateSemaphoreButtons() {
-		for (int i = 0; i < intersections.Count; i++) {
+		for (int i = 0; i < DataValue.intersections.Count; i++) {
 			UIIntersection item = Instantiate(uiIntersection, MainCanvas.transform);
 			item.gameObject.SetActive(true);
-			item.Init(intersections[i]);
+			item.Init(DataValue.intersections[i]);
 			uiIntersections.Add(item);
 		}
 	}
@@ -56,7 +56,7 @@ public class UIIntersectionPanel : UIItem {
 
 	private void Update() {
 		for (int i = 0; i < uiIntersections.Count; i++) {
-			bool visible = Vector3.Distance(intersections[i].transform.position, Camera.main.transform.position) <= minVisibleDistance;
+			bool visible = Vector3.Distance(DataValue.intersections[i].transform.position, Camera.main.transform.position) <= minVisibleDistance;
 
 			if (visible != uiIntersections[i].gameObject.activeSelf) {
 				uiIntersections[i].gameObject.SetActive(visible);
@@ -66,5 +66,10 @@ public class UIIntersectionPanel : UIItem {
 				uiIntersections[i].UpdateUI();
 			}
 		}
+	}
+
+	public class Data : IUIViewData {
+		public Action onBack;
+		public List<Node> intersections;
 	}
 }

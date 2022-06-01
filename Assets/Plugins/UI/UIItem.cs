@@ -29,13 +29,23 @@ public class UIItem : MonoBehaviour {
 		set => Size = new Vector2(Size.x, value);
 	}
 
-	public float GlobalWidth => RectTransform.rect.width;
-	public float globalHeight => RectTransform.rect.height;
-
-	public Vector2 Pos {
+	public Vector2 AnchoredPos {
 		get => RectTransform.anchoredPosition;
 		set => RectTransform.anchoredPosition = value;
 	}
+
+	public float AnchoredPosX {
+		get => AnchoredPos.x;
+		set => AnchoredPos = new Vector2(value, AnchoredPos.y);
+	}
+
+	public float AnchoredPosY {
+		get => AnchoredPos.x;
+		set => AnchoredPos = new Vector2(AnchoredPos.x, value);
+	}
+
+	public float GlobalWidth => RectTransform.rect.width;
+	public float globalHeight => RectTransform.rect.height;
 
 	public float Right {
 		get {

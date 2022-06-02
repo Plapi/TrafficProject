@@ -4,13 +4,17 @@ using UnityEngine;
 
 public class NodeController : MonoBehaviour {
 
-	private const string SAVE_DATA_KEY = "NODES_DATA";
+	private const string DATA_SAVE_KEY = "NODES_DATA";
 
-	[SerializeField] private BoxCollider map = default;
 	[SerializeField] private List<PointOfInterest> pointOfInterests = default;
+	[SerializeField] private List<LinkedNode> linkedNodes = default;
+
+	[SerializeField] private List<NodeRestrictedArea> restrictedAreas = default;
 
 	private readonly List<Node> nodes = new();
+	private readonly List<Node> otherLinkedNodes = new();
 
+	private BoxCollider map;
 	private Node prevNode;
 	private Node currentNode;
 	private Node virtualNode;
@@ -21,7 +25,18 @@ public class NodeController : MonoBehaviour {
 	public bool CurrentNodesHasMinDistance => currentNode != null && prevNode != null &&
 		Vector3.Distance(currentNode.transform.position, prevNode.transform.position) > Config.Instance.RoadHalfWidth;
 
-	public void Init() {
+	private string dataSaveKey = DATA_SAVE_KEY;
+
+	public void SetLinkNodes() {
+		for (int i = 0; i < linkedNodes.Count; i++) {
+			linkedNodes[i].LinkNode.SetNode(true, true);
+			linkedNodes[i].SetNode(true, false);
+		}
+	}
+
+	public void Init(BoxCollider map) {
+		this.map = map;
+		dataSaveKey += "_" + transform.parent.name;
 
 		for (int i = 0; i < pointOfInterests.Count; i++) {
 			pointOfInterests[i].HeadNode.SetNode(true, true);
@@ -31,27 +46,38 @@ public class NodeController : MonoBehaviour {
 			CreateNodesConnexion(pointOfInterests[i].HeadNode, pointOfInterests[i].OtherNode);
 		}
 
-		if (PlayerPrefs.HasKey(SAVE_DATA_KEY)) {
-			NodeData[] nodesData = Utils.Deserialize<NodeData[]>(PlayerPrefs.GetString(SAVE_DATA_KEY));
+		for (int i = 0; i < linkedNodes.Count; i++) {
+			linkedNodes[i].LinkNode.SetNode(true, false);
+			linkedNodes[i].SetNode(true, false);
+			nodes.Add(linkedNodes[i].LinkNode);
+			nodes.Add(linkedNodes[i]);
+			CreateNodesConnexion(linkedNodes[i].LinkNode, linkedNodes[i]);
+			otherLinkedNodes.Add(linkedNodes[i].LinkNode);
+		}
+
+		if (PlayerPrefs.HasKey(dataSaveKey)) {
+			NodeData[] nodesData = Utils.Deserialize<NodeData[]>(PlayerPrefs.GetString(dataSaveKey));
 			for (int i = 0; i < nodesData.Length; i++) {
-				NewNode(nodesData[i].position.ToVector3());
+				if (!nodesData[i].isStatic) {
+					NewNode(nodesData[i].position.ToVector3());
+				}
 			}
-			int staticNodesCount = pointOfInterests.Count * 2;
+
 			for (int i = 0; i < nodesData.Length; i++) {
 				for (int j = 0; j < nodesData[i].connexions.Length; j++) {
-					CreateNodesConnexion(nodes[i + staticNodesCount], nodes[nodesData[i].connexions[j]]);
+					CreateNodesConnexion(nodes[i], nodes[nodesData[i].connexions[j]]);
 				}
 			}
 
 			nodes.ForEach(n => n.UpdateMesh());
 
 			for (int i = 0; i < nodesData.Length; i++) {
-				if (nodes[i + staticNodesCount].ConnexionsCount > 2) {
+				if (nodes[i].ConnexionsCount > 2) {
 					NavigationPoint[] inputPoints = Config.Instance.RightDriving ?
-					nodes[i + staticNodesCount].GetNavigationRightPoints() : nodes[i + staticNodesCount].GetNavigationLeftPoints();
-					nodes[i + staticNodesCount].UpdateSemaphore(nodesData[i].intersection.semaphore);
+					nodes[i].GetNavigationRightPoints() : nodes[i].GetNavigationLeftPoints();
+					nodes[i].UpdateSemaphore(nodesData[i].intersection.semaphore);
 					for (int j = 0; j < inputPoints.Length; j++) {
-						nodes[i + staticNodesCount].UpdateGiveWay(j, nodesData[i].intersection.giveWayInputs[j]);
+						nodes[i].UpdateGiveWay(j, nodesData[i].intersection.giveWayInputs[j]);
 					}
 				}
 			}
@@ -358,6 +384,11 @@ public class NodeController : MonoBehaviour {
 				return true;
 			}
 		}
+		for (int i = 0; i < restrictedAreas.Count; i++) {
+			if (restrictedAreas[i].IntersectConnexion(node0, node1)) {
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -406,7 +437,7 @@ public class NodeController : MonoBehaviour {
 	}
 
 	private Node NewNode(Vector3 point, bool addToList = true) {
-		Node node = new GameObject($"node{(addToList ? nodes.Count : "_virtual")}").AddComponent<Node>();
+		Node node = new GameObject($"node{(addToList ? nodes.Count : "_virtual")}_{transform.parent.name}").AddComponent<Node>();
 		node.transform.parent = transform;
 		node.transform.position = point;
 		if (addToList) {
@@ -453,19 +484,19 @@ public class NodeController : MonoBehaviour {
 	}
 
 	public void SaveDada() {
-		List<Node> nonStaticNodes = new(nodes.Count - pointOfInterests.Count * 2);
-		nodes.ForEach(node => {
-			if (!node.IsStaticNode) {
-				nonStaticNodes.Add(node);
-			}
-		});
-
-		NodeData[] nodesData = new NodeData[nonStaticNodes.Count];
+		NodeData[] nodesData = new NodeData[nodes.Count];
 		for (int i = 0; i < nodesData.Length; i++) {
 			nodesData[i] = new() {
-				position = JSONVector3.FromVector3(nonStaticNodes[i].transform.position)
+				isStatic = nodes[i].IsStaticNode
 			};
-			List<Node> connexions = nonStaticNodes[i].GetConnexions();
+			if (!nodesData[i].isStatic) {
+				nodesData[i].position = JSONVector3.FromVector3(nodes[i].transform.position);
+			}
+			if (otherLinkedNodes.Contains(nodes[i])) {
+				nodesData[i].connexions = new int[0];
+				continue;
+			}
+			List<Node> connexions = nodes[i].GetConnexions();
 			nodesData[i].connexions = new int[connexions.Count];
 			for (int j = 0; j < nodesData[i].connexions.Length; j++) {
 				int index = nodes.IndexOf(connexions[j]);
@@ -475,27 +506,29 @@ public class NodeController : MonoBehaviour {
 					Debug.LogError($"Index not found for {connexions[j]}");
 				}
 			}
-			if (connexions.Count > 2) {
+			if (!nodesData[i].isStatic && connexions.Count > 2) {
 				NavigationPoint[] inputPoints = Config.Instance.RightDriving ?
-					nonStaticNodes[i].GetNavigationRightPoints() : nonStaticNodes[i].GetNavigationLeftPoints();
+					nodes[i].GetNavigationRightPoints() : nodes[i].GetNavigationLeftPoints();
 				IntersectionData intersectionData = new();
 				intersectionData.giveWayInputs = new bool[inputPoints.Length];
 				for (int j = 0; j < intersectionData.giveWayInputs.Length; j++) {
 					intersectionData.giveWayInputs[j] = inputPoints[j].GivesWay;
 				}
-				intersectionData.semaphore = nonStaticNodes[i].GetSemaphoreData();
+				intersectionData.semaphore = nodes[i].GetSemaphoreData();
 				nodesData[i].intersection = intersectionData;
 			}
 		}
-		PlayerPrefs.SetString(SAVE_DATA_KEY, Utils.Serialize(nodesData));
+
+		PlayerPrefs.SetString(dataSaveKey, Utils.Serialize(nodesData));
 		PlayerPrefs.Save();
 	}
 
-	public static void DeleteData() {
-		PlayerPrefs.DeleteKey(SAVE_DATA_KEY);
+	public void DeleteData() {
+		PlayerPrefs.DeleteKey(DATA_SAVE_KEY + "_" + transform.parent.name);
 	}
 
 	private class NodeData {
+		public bool isStatic;
 		public JSONVector3 position;
 		public int[] connexions;
 		public IntersectionData intersection;
@@ -504,9 +537,12 @@ public class NodeController : MonoBehaviour {
 #if UNITY_EDITOR
 	private void OnDrawGizmos() {
 		for (int i = 0; i < pointOfInterests.Count; i++) {
-			pointOfInterests[i].name = $"PointOfInterest{i}";
-			pointOfInterests[i].HeadNode.name = $"node_static_head_{i}";
-			pointOfInterests[i].OtherNode.name = $"node_static_{i}";
+			pointOfInterests[i].name = $"PointOfInterest{i}_{transform.parent.name}";
+			pointOfInterests[i].HeadNode.name = $"node_static_head_{i}_{transform.parent.name}";
+			pointOfInterests[i].OtherNode.name = $"node_static_{i}_{transform.parent.name}";
+		}
+		for (int i = 0; i < linkedNodes.Count; i++) {
+			linkedNodes[i].name = $"linkedNode{i}_{transform.parent.name}";
 		}
 	}
 #endif

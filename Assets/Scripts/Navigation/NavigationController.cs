@@ -15,6 +15,99 @@ public class NavigationController : MonoBehaviour {
 
 	private int totalAgents;
 
+	public void SetPoints(List<NodeController> nodeControllers) {
+		List<NavigationPoint> points = new();
+		nodeControllers.ForEach(nodeController => {
+			nodeController.GetAllNodes().ForEach(n => {
+				points.AddRange(n.GetNavigationRightPoints());
+				points.AddRange(n.GetNavigationLeftPoints());
+			});
+		});
+
+		Dictionary<string, string> alreadyProcessedConnexions = new();
+
+		nodeControllers.ForEach(nodeController => {
+			nodeController.IterateAllConnexions((Node n0, Node n1) => {
+
+				string n0n1Name = n0.name + n1.name;
+				string n1n0Name = n1.name + n0.name;
+
+				if (!alreadyProcessedConnexions.ContainsKey(n0n1Name) && !alreadyProcessedConnexions.ContainsKey(n1n0Name)) {
+
+					alreadyProcessedConnexions.Add(n0n1Name, null);
+					alreadyProcessedConnexions.Add(n1n0Name, null);
+
+					nodeController.GetNavigationPointsBetween(n0, n1, out NavigationPoint[] navPoints);
+
+					Vector3 mid0 = Utils.MidPoint(navPoints[0].Position, navPoints[2].Position);
+					Vector3 mid1 = Utils.MidPoint(navPoints[1].Position, navPoints[3].Position);
+					Vector3 dir = (mid1 - mid0).normalized;
+
+					Vector3 delta = (navPoints[0].Position - mid0).normalized;
+					Vector3 cross = Vector3.Cross(delta, dir);
+
+					if (Config.Instance.RightDriving) {
+						if (cross.y > 0) {
+							navPoints[1].AddNextNode(navPoints[0]);
+							navPoints[2].AddNextNode(navPoints[3]);
+						} else {
+							navPoints[0].AddNextNode(navPoints[1]);
+							navPoints[3].AddNextNode(navPoints[2]);
+						}
+					} else {
+						if (cross.y > 0) {
+							navPoints[0].AddNextNode(navPoints[1]);
+							navPoints[3].AddNextNode(navPoints[2]);
+						} else {
+							navPoints[1].AddNextNode(navPoints[0]);
+							navPoints[2].AddNextNode(navPoints[3]);
+						}
+					}
+				}
+			});
+		});
+
+		nodeControllers.ForEach(nodeController => {
+			nodeController.GetAllNodes().ForEach(node => {
+				if (node.GetNavigationRightPoints().Length >= 2) {
+
+					NavigationPoint[] rightPoints = node.GetNavigationRightPoints();
+					NavigationPoint[] leftPoints = node.GetNavigationLeftPoints();
+
+					Vector3[] rightDirections = node.GetNavigationDirectionRightPoints();
+					Vector3[] leftDirections = node.GetNavigationDirectionLeftPoints();
+
+					if (Config.Instance.RightDriving) {
+						for (int i = 0; i < rightPoints.Length; i++) {
+							for (int j = 0; j < leftPoints.Length; j++) {
+								if (i != j) {
+									Vector3 cPoint = Utils.Intersection(rightPoints[i].Position, rightDirections[i], leftPoints[j].Position, leftDirections[j]);
+									rightPoints[i].AddNextNodeWithCurvePoints(leftPoints[j], cPoint);
+								}
+							}
+						}
+					} else {
+						for (int i = 0; i < leftPoints.Length; i++) {
+							for (int j = 0; j < rightPoints.Length; j++) {
+								if (i != j) {
+									Vector3 cPoint = Utils.Intersection(leftPoints[i].Position, leftDirections[i], rightPoints[j].Position, rightDirections[j]);
+									leftPoints[i].AddNextNodeWithCurvePoints(rightPoints[j], cPoint);
+								}
+							}
+						}
+					}
+				}
+			});
+		});
+
+		List<PointOfInterest> pofs = new();
+		nodeControllers.ForEach(nodeController => {
+			pofs.AddRange(nodeController.GetPointOfInterests());
+		});
+
+		SetPoints(points, pofs);
+	}
+
 	public void SetPoints(List<NavigationPoint> points, List<PointOfInterest> pointOfInterests) {
 		this.points = points.ToArray();
 		this.pointOfInterests = pointOfInterests;

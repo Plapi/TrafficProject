@@ -10,17 +10,21 @@ public class UILevelView : UIView<UILevelView.Data> {
 	[SerializeField] private Button intersectionButton = default;
 	[SerializeField] private Button playButton = default;
 
+	public override void OnBack() {
+		UIController.Instance.HideCurrentView(DataValue.onBack);
+	}
+
 	public override void OnInit() {
-		roadButton.onClick.AddListener(() => {
+		roadButton.SetAction(() => {
 			DataValue.onRoadButton?.Invoke();
 		});
-		demolishButton.onClick.AddListener(() => {
+		demolishButton.SetAction(() => {
 			DataValue.onDemolishButton?.Invoke();
 		});
-		intersectionButton.onClick.AddListener(() => {
+		intersectionButton.SetAction(() => {
 			DataValue.onIntersectionButton?.Invoke();
 		});
-		playButton.onClick.AddListener(() => {
+		playButton.SetAction(() => {
 			DataValue.onPlayButton?.Invoke();
 		});
 	}
@@ -39,6 +43,7 @@ public class UILevelView : UIView<UILevelView.Data> {
 	}
 
 	public class Data : IUIViewData {
+		public Action onBack;
 		public Action onRoadButton;
 		public Action onDemolishButton;
 		public Action onIntersectionButton;

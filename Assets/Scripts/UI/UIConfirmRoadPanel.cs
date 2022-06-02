@@ -9,10 +9,10 @@ public class UIConfirmRoadPanel : UIItem {
 	[SerializeField] private Button acceptButton = default;
 
 	public void Init(Action onDeclineButton, Action onAcceptButton) {
-		declineButton.onClick.AddListener(() => {
+		declineButton.SetAction(() => {
 			onDeclineButton?.Invoke();
 		});
-		acceptButton.onClick.AddListener(() => {
+		acceptButton.SetAction(() => {
 			onAcceptButton?.Invoke();
 		});
 	}

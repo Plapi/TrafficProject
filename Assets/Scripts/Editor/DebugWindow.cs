@@ -33,7 +33,10 @@ public class DebugWindow : EditorWindow {
 		Time.timeScale = EditorGUILayout.Slider("Time Scale", Time.timeScale, 0f, 1f);
 
 		if (GUILayout.Button("Delete Nodes Data")) {
-			NodeController.DeleteData();
+			LevelController[] levels = FindObjectsOfType<LevelController>();
+			for (int i = 0; i < levels.Length; i++) {
+				levels[i].DeleteData();
+			}
 		}
 
 		if (GUILayout.Button("Test")) {

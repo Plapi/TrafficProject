@@ -35,7 +35,7 @@ public class UIIntersection : UIItem {
 		}
 
 		UpdateSwitchSemaphore();
-		semaphoreSwitchButton.onClick.AddListener(() => {
+		semaphoreSwitchButton.SetAction(() => {
 			semaphoreData.isOn = !semaphoreData.isOn;
 			intersection.UpdateSemaphores();
 			intersection.UpdateGiveWaysObjects();

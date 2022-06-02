@@ -117,7 +117,7 @@ public class Node : MonoBehaviour {
 	}
 
 	private Semaphore GetSemaphore(int index) {
-		for (int i = index; i <= index; i++) {
+		for (int i = semaphores.Count; i <= index; i++) {
 			Semaphore semaphore = Instantiate(Resources.Load<Semaphore>("RoadSigns/Semaphore"), transform);
 			semaphore.name = $"Semaphore{index}";
 			semaphore.gameObject.SetActive(false);

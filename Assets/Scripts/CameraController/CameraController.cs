@@ -9,6 +9,9 @@ public class CameraController : MonoBehaviourSingleton<CameraController> {
 	[SerializeField] private float minOrtSize = default;
 	[SerializeField] private float maxOrtSize = default;
 
+	[SerializeField] private Vector2 cameraMinBounds = default;
+	[SerializeField] private Vector2 cameraMaxBounds = default;
+
 	private Plane plane;
 	private GTouch firstTouch;
 	private bool allowMoving = true;
@@ -139,8 +142,8 @@ public class CameraController : MonoBehaviourSingleton<CameraController> {
 
 	private void FixCameraPos() {
 		cam.transform.SetY(Mathf.Clamp(cam.transform.position.y, 5f, 200f));
-		cam.transform.SetX(Mathf.Clamp(cam.transform.position.x, -300f, 300f));
-		cam.transform.SetZ(Mathf.Clamp(cam.transform.position.z, -300f, 300f));
+		cam.transform.SetX(Mathf.Clamp(cam.transform.position.x, cameraMinBounds.x, cameraMaxBounds.x));
+		cam.transform.SetZ(Mathf.Clamp(cam.transform.position.z, cameraMinBounds.y, cameraMaxBounds.y));
 	}
 
 	private bool IsTap(GTouch lastTouch) {

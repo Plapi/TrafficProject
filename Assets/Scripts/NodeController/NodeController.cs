@@ -75,6 +75,9 @@ public class NodeController : MonoBehaviour {
 				if (nodes[i].ConnexionsCount > 2) {
 					NavigationPoint[] inputPoints = Config.Instance.RightDriving ?
 					nodes[i].GetNavigationRightPoints() : nodes[i].GetNavigationLeftPoints();
+					if (nodesData[i].intersection == null) {
+						Debug.LogError("Intersection is null");
+					}
 					nodes[i].UpdateSemaphore(nodesData[i].intersection.semaphore);
 					for (int j = 0; j < inputPoints.Length; j++) {
 						nodes[i].UpdateGiveWay(j, nodesData[i].intersection.giveWayInputs[j]);
@@ -506,7 +509,7 @@ public class NodeController : MonoBehaviour {
 					Debug.LogError($"Index not found for {connexions[j]}");
 				}
 			}
-			if (!nodesData[i].isStatic && connexions.Count > 2) {
+			if (/*!nodesData[i].isStatic && */connexions.Count > 2) {
 				NavigationPoint[] inputPoints = Config.Instance.RightDriving ?
 					nodes[i].GetNavigationRightPoints() : nodes[i].GetNavigationLeftPoints();
 				IntersectionData intersectionData = new();

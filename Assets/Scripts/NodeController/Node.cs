@@ -557,8 +557,8 @@ public class Node : MonoBehaviour {
 	}
 
 #if UNITY_EDITOR
-	[SerializeField] private bool drawGizmos = default;
-	private void OnDrawGizmos() {
+	[SerializeField] protected bool drawGizmos = default;
+	protected virtual void OnDrawGizmos() {
 		if (!drawGizmos) {
 			return;
 		}

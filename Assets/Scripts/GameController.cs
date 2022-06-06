@@ -8,6 +8,8 @@ public class GameController : MonoBehaviourSingleton<GameController> {
 	[SerializeField] private NavigationController mainNavigationController = default;
 	[SerializeField] private LevelController[] levels = default;
 
+	private readonly List<NodeController> nodeControllers = new();
+
 	private void Start() {
 		base.Awake();
 
@@ -15,12 +17,11 @@ public class GameController : MonoBehaviourSingleton<GameController> {
 			CameraController.Instance.ChangeOrto();
 		});
 
-		List<NodeController> nodeControllers = new();
 		for (int i = 0; i < levels.Length; i++) {
 			levels[i].Init(OnEnterMap);
 			nodeControllers.Add(levels[i].GetNodeController());
 		}
-		mainNavigationController.SetPoints(nodeControllers);
+		StartNavigation();
 
 		UIController.Instance.ShowView<UIMapView>();
 
@@ -29,7 +30,7 @@ public class GameController : MonoBehaviourSingleton<GameController> {
 
 	private void OnEnterMap() {
 		CameraController.Instance.SetTapAction(() => {
-			mainNavigationController.Stop();
+			StopNavigation();
 			for (int i = 0; i < levels.Length; i++) {
 				if (levels[i].TouchInputRaycast()) {
 					CameraController.Instance.SetTapAction(null);
@@ -37,6 +38,20 @@ public class GameController : MonoBehaviourSingleton<GameController> {
 					break;
 				}
 			}
+		});
+	}
+
+	private void StartNavigation() {
+		mainNavigationController.SetPoints(nodeControllers);
+		nodeControllers.ForEach(n => {
+			n.StartIntersectionsWithSemaphore();
+		});
+	}
+
+	private void StopNavigation() {
+		mainNavigationController.Stop();
+		nodeControllers.ForEach(n => {
+			n.StopIntersectionsWithSemaphores();
 		});
 	}
 }

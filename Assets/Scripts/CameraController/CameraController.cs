@@ -104,7 +104,7 @@ public class CameraController : MonoBehaviourSingleton<CameraController> {
 					cam.transform.Translate(PlanePositionDelta(touches[0]), Space.World);
 				}
 			} else if (touches[0].Phase == TouchPhase.Ended && touches[1] == null) {
-				if (tapAction != null && IsTap(touches[0])) {
+				if (tapAction != null && !Utils.IsOverUI() && IsTap(touches[0])) {
 					tapAction();
 				}
 			}

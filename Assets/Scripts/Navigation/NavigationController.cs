@@ -115,9 +115,9 @@ public class NavigationController : MonoBehaviour {
 		adjacents = BFS<NavigationPoint>.GetAdjacents(this.points);
 
 		SetConflictPoints();
-		SetPaths();
+		//SetPaths();
 
-		this.Delay(2f, () => StartCoroutine(SpawnAgentsCorutine()));
+		//this.Delay(2f, () => StartCoroutine(SpawnAgentsCorutine()));
 	}
 
 	public void Stop() {

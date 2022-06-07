@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -36,6 +35,13 @@ public class DebugWindow : EditorWindow {
 			LevelController[] levels = FindObjectsOfType<LevelController>();
 			for (int i = 0; i < levels.Length; i++) {
 				levels[i].DeleteData();
+			}
+		}
+
+		if (GUILayout.Button("Create Level Borders")) {
+			LevelController[] levels = FindObjectsOfType<LevelController>();
+			for (int i = 0; i < levels.Length; i++) {
+				levels[i].CreateLevelBorders();
 			}
 		}
 

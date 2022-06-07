@@ -42,4 +42,6 @@ public class Config : ScriptableObject {
 	private float roadHalfWidth;
 	private float roadDoubleWidth;
 	private float roadQuadrupleWidth;
+
+	public Color LevelBorderColor;
 }

@@ -546,6 +546,7 @@ public class NodeController : MonoBehaviour {
 		}
 		for (int i = 0; i < linkedNodes.Count; i++) {
 			linkedNodes[i].name = $"linkedNode{i}_{transform.parent.name}";
+			linkedNodes[i].UpdateDestinationMark();
 		}
 	}
 #endif

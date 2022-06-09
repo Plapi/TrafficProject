@@ -8,8 +8,6 @@ public class LevelController : MonoBehaviour {
 	[SerializeField] private NodeController nodeController = default;
 	[SerializeField] private NavigationController navigationController = default;
 
-	[SerializeField] private UIConfirmRoadPanel confirmRoadPanel = default;
-
 	[SerializeField] private MeshRenderer border = default;
 	[SerializeField] private bool isRightEdge = default;
 	[SerializeField] private bool isBottomEdge = default;
@@ -44,6 +42,7 @@ public class LevelController : MonoBehaviour {
 			onRoadButton = () => {
 				UIController.Instance.ShowView<UIBuildRoadView>(() => {
 					nodeController.enabled = true;
+					nodeController.ShowHighligtsAnim();
 				});
 				CameraController.Instance.SetMoveEnable(false);
 			}, onDemolishButton = () => {
@@ -76,8 +75,8 @@ public class LevelController : MonoBehaviour {
 					}
 				}
 				nodeController.enabled = false;
-				if (confirmRoadPanel.gameObject.activeSelf) {
-					confirmRoadPanel.Hide();
+				if (MapController.Instance.ConfirmRoadPanel.gameObject.activeSelf) {
+					MapController.Instance.ConfirmRoadPanel.Hide();
 				}
 			}
 		});
@@ -101,12 +100,12 @@ public class LevelController : MonoBehaviour {
 			}
 		});
 
-		confirmRoadPanel.Init(() => {
-			confirmRoadPanel.Hide();
+		MapController.Instance.ConfirmRoadPanel.Init(() => {
+			MapController.Instance.ConfirmRoadPanel.Hide();
 			updateConfirmRoadPanelPos = false;
 			nodeController.DismissCurrentNode();
 		}, () => {
-			confirmRoadPanel.Hide();
+			MapController.Instance.ConfirmRoadPanel.Hide();
 			updateConfirmRoadPanelPos = false;
 			nodeController.ApplyCurrentNode();
 		});
@@ -124,24 +123,27 @@ public class LevelController : MonoBehaviour {
 				if (Input.GetMouseButtonDown(0)) {
 					updateNode = nodeController.CurrentNode == null || nodeController.IsMouseInputCloseToCurrentNode();
 					CameraController.Instance.SetMoveEnable(!updateNode);
+					if (updateNode) {
+						nodeController.HideHighlightsAnim();
+					}
 				} else if (updateNode && Input.GetMouseButton(0)) {
-					if (confirmRoadPanel.gameObject.activeSelf) {
-						confirmRoadPanel.Hide();
+					if (MapController.Instance.ConfirmRoadPanel.gameObject.activeSelf) {
+						MapController.Instance.ConfirmRoadPanel.Hide();
 					}
 					nodeController.UpdateController();
 				}
 			}
 
 			if (updateNode && Input.GetMouseButtonUp(0) && nodeController.CurrentNodesHasMinDistance) {
-				confirmRoadPanel.Show();
+				MapController.Instance.ConfirmRoadPanel.Show();
 				updateConfirmRoadPanelPos = true;
 				updateNode = false;
 			}
 		}
 
 		if (updateConfirmRoadPanelPos && nodeController.CurrentNode != null) {
-			confirmRoadPanel.UpdateAnchorPos(nodeController.CurrentNode.transform);
-			confirmRoadPanel.SetAcceptButtonInteractable(nodeController.CurrentNodeCanBePlaced);
+			MapController.Instance.ConfirmRoadPanel.UpdateAnchorPos(nodeController.CurrentNode.transform);
+			MapController.Instance.ConfirmRoadPanel.SetAcceptButtonInteractable(nodeController.CurrentNodeCanBePlaced);
 		}
 	}
 
@@ -190,14 +192,30 @@ public class LevelController : MonoBehaviour {
 		};
 
 		List<int> triangles = new() {
-			0, 1, 2,
-			2, 1, 0,
-			1, 2, 3,
-			3, 2, 1,
-			2, 3, 4,
-			4, 2, 3,
-			3, 4, 5,
-			5, 4, 3
+			0,
+			1,
+			2,
+			2,
+			1,
+			0,
+			1,
+			2,
+			3,
+			3,
+			2,
+			1,
+			2,
+			3,
+			4,
+			4,
+			2,
+			3,
+			3,
+			4,
+			5,
+			5,
+			4,
+			3
 		};
 		if (isRightEdge) {
 			triangles.AddRange(new int[] { 4, 5, 6 });

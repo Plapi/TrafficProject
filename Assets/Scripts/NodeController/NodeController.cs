@@ -19,6 +19,8 @@ public class NodeController : MonoBehaviour {
 	private Node currentNode;
 	private Node virtualNode;
 
+	private readonly List<GameObject> highlightsAnim = new();
+
 	public bool CurrentNodeCanBePlaced { get; private set; }
 	public Node CurrentNode => currentNode;
 
@@ -160,6 +162,27 @@ public class NodeController : MonoBehaviour {
 		closestPoints = getGlosestPoints();
 		navPoints[2] = closestPoints.Item1;
 		navPoints[3] = closestPoints.Item2;
+	}
+
+	private void OnDisable() {
+		HideHighlightsAnim();
+	}
+
+	public void ShowHighligtsAnim() {
+		for (int i = 0; i < nodes.Count; i++) {
+			if (nodes[i].IsStaticNode && !nodes[i].IsHeadNode && nodes[i].ConnexionsCount == 1) {
+				GameObject hAnim = Instantiate(Resources.Load<GameObject>("HighlightAnim"), nodes[i].transform);
+				hAnim.name = "HighlightAnim";
+				highlightsAnim.Add(hAnim);
+			}
+		}
+	}
+
+	public void HideHighlightsAnim() {
+		if (highlightsAnim.Count > 0) {
+			highlightsAnim.ForEach(Destroy);
+			highlightsAnim.Clear();
+		}
 	}
 
 	public void UpdateController() {

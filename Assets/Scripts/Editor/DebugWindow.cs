@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -30,6 +31,10 @@ public class DebugWindow : EditorWindow {
 		ScrollPos = EditorGUILayout.BeginScrollView(ScrollPos);
 
 		Time.timeScale = EditorGUILayout.Slider("Time Scale", Time.timeScale, 0f, 1f);
+
+		if (GUILayout.Button("Take Screenshot")) {
+			EditorCoroutine.Start(TakeScreenshotIEnumerator());
+		}
 
 		if (GUILayout.Button("Delete Nodes Data")) {
 			LevelController[] levels = FindObjectsOfType<LevelController>();
@@ -119,6 +124,99 @@ public class DebugWindow : EditorWindow {
 		readableText.LoadRawTextureData(bytes);
 		readableText.Apply();
 		return readableText;
+	}
+
+	private static IEnumerator TakeScreenshotIEnumerator() {
+		string screenCaptureName = "ScreenCapture " + DateTime.Now.ToString("MM-dd-yyyy HH-mm-ss") + ".png";
+
+		ScreenCapture.CaptureScreenshot(screenCaptureName);
+		while (!File.Exists(Application.dataPath.Replace("Assets", screenCaptureName))) {
+			yield return null;
+		}
+
+		string screenshotPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/" + screenCaptureName;
+
+		File.WriteAllBytes(screenshotPath, File.ReadAllBytes(Application.dataPath.Replace("Assets", screenCaptureName)));
+		File.Delete(Application.dataPath.Replace("Assets", screenCaptureName));
+
+		System.Diagnostics.Process m_process = new System.Diagnostics.Process {
+			StartInfo = new System.Diagnostics.ProcessStartInfo(screenshotPath)
+		};
+
+		m_process.Start();
+	}
+
+	private void TakeTransparentTexture() {
+		string screenCaptureName = "ScreenCapture " + DateTime.Now.ToString("MM-dd-yyyy HH-mm-ss") + ".png";
+		const int width = 240;
+		const int height = 240;
+
+		RenderTexture prevRenderTexture = RenderTexture.active;
+
+		Camera.main.targetTexture = RenderTexture.GetTemporary(width, height, 8);
+		RenderTexture.active = Camera.main.targetTexture;
+		Camera.main.Render();
+
+		Texture2D texture = new(width, height);
+		texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+		texture.Apply();
+
+		string screenshotPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/" + screenCaptureName;
+
+		File.WriteAllBytes(screenshotPath, texture.EncodeToPNG());
+
+		RenderTexture.active = prevRenderTexture;
+		Camera.main.targetTexture = null;
+
+		System.Diagnostics.Process m_process = new() {
+			StartInfo = new System.Diagnostics.ProcessStartInfo(screenshotPath)
+		};
+
+		m_process.Start();
+	}
+
+	[MenuItem("IL Editor Utils/Take Screenshot %k")]
+	private static void TakeScreenshot() {
+		EditorCoroutine.Start(TakeScreenshotIEnumerator());
+	}
+
+	[MenuItem("IL Editor Utils/Reload Current Scene Or Prefab %t")]
+	public static void ReloadCurrentSceneOrPrefab() {
+		if (!Application.isPlaying) {
+			PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+			if (prefabStage != null) {
+				AssetDatabase.OpenAsset(AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(prefabStage.assetPath));
+			} else {
+				CheckSaveScene(() => {
+					SaveLastGameObjectSelected(Selection.activeGameObject);
+					EditorSceneManager.OpenScene(SceneManager.GetActiveScene().path);
+					SelectLastGameObjectSelected();
+				});
+			}
+		}
+	}
+
+	private static void SaveLastGameObjectSelected(GameObject _selectedGameObject) {
+		EditorPrefs.SetString("TP_LAST_GAMEOBJECT_SELECTED_NAME", _selectedGameObject != null ? _selectedGameObject.name : null);
+	}
+
+	private static void SelectLastGameObjectSelected() {
+		Selection.activeGameObject = GameObject.Find(EditorPrefs.GetString("TP_LAST_GAMEOBJECT_SELECTED_NAME"));
+	}
+
+	private static void CheckSaveScene(Action onComplete) {
+		Scene scene = EditorSceneManager.GetActiveScene();
+		EditorPrefs.SetString("LAST_SCENE", scene.path);
+		if (scene.isDirty) {
+			if (EditorUtility.DisplayDialog("Save Scene", "Do you want to save " + scene.name + " before playing?", "Yes", "No")) {
+				EditorSceneManager.SaveScene(scene, "", false);
+				onComplete();
+			} else {
+				onComplete();
+			}
+		} else {
+			onComplete();
+		}
 	}
 
 	public static class SceneNavigator {

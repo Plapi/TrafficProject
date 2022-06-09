@@ -17,7 +17,7 @@ public class LinkedNode : Node {
 	}
 
 	public void UpdateDestinationMark() {
-		if (linkNode == null) {
+		if (Application.isPlaying || linkNode == null) {
 			return;
 		}
 
@@ -27,11 +27,8 @@ public class LinkedNode : Node {
 		}
 
 		Utils.PerpendicularPoints(transform.position, linkNode.transform.position, out _, out Vector3 pos, 2.75f);
-		destinationMark.transform.position = pos;
-
 		Vector3 dir = (transform.position - linkNode.transform.position).normalized;
-		destinationMark.transform.rotation = Quaternion.LookRotation(dir);
-
+		destinationMark.transform.SetPositionAndRotation(pos - dir * 5f, Quaternion.LookRotation(dir));
 		destinationMark.SetName("Exit");
 	}
 #endif

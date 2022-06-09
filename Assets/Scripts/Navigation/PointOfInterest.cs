@@ -48,11 +48,8 @@ public class PointOfInterest : MonoBehaviour {
 		}
 
 		Utils.PerpendicularPoints(otherNode.transform.position, headNode.transform.position, out Vector3 pos, out _, 2.75f);
-		destinationMark.transform.position = pos;
-
 		Vector3 dir = (otherNode.transform.position - headNode.transform.position).normalized;
-		destinationMark.transform.rotation = Quaternion.LookRotation(dir);
-
+		destinationMark.transform.SetPositionAndRotation(pos - dir * 5f, Quaternion.LookRotation(dir));
 		destinationMark.SetName(string.IsNullOrEmpty(locationName) ? "Todo" : locationName);
 	}
 #endif

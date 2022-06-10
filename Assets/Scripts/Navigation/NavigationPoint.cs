@@ -23,6 +23,10 @@ public class NavigationPoint : BFSNode {
 		return nextNodes;
 	}
 
+	public void ClearNextNodes() {
+		nextNodes = new NavigationPoint[0];
+	}
+
 	public void AddNextNode(NavigationPoint nextPoint) {
 		List<NavigationPoint> list = new(nextNodes);
 		list.Add(nextPoint);

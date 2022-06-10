@@ -10,24 +10,6 @@ public class LinkedNode : Node {
 
 	public LinkedNode LinkNode => linkNode;
 
-	public NavigationPoint StartNavigationPoint {
-		get {
-			if (Config.Instance.RightDriving) {
-				return GetNavigationRightPoints()[0];
-			}
-			return GetNavigationLeftPoints()[0];
-		}
-	}
-
-	public NavigationPoint EndNavigationPoint {
-		get {
-			if (Config.Instance.RightDriving) {
-				return GetNavigationLeftPoints()[0];
-			}
-			return GetNavigationRightPoints()[0];
-		}
-	}
-
 	public void InitProgressSpawnTime() {
 		spawnTimeProgress = spawnTime;
 	}

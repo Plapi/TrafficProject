@@ -70,7 +70,6 @@ public class LevelController : MonoBehaviour {
 					StartPlayMode();
 				} else {
 					navigationController.Stop();
-					Debug.LogError("Can not start play mode");
 				}
 			}
 		});
@@ -126,6 +125,11 @@ public class LevelController : MonoBehaviour {
 
 	private bool CanStartPlayMode() {
 		navigationController.SetPoints(new List<NodeController> { nodeController }, out List<(string, string)> missingPaths, nodeController.GetLinkedNodes());
+		if (missingPaths.Count > 0) {
+			missingPaths.ForEach(con => {
+				Debug.LogError($"Could not find path {con.Item1} {con.Item2}");
+			});
+		}
 		return missingPaths.Count == 0;
 	}
 

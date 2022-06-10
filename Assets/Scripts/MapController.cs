@@ -27,7 +27,7 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 			levels[i].Init(OnEnter);
 			nodeControllers.Add(levels[i].GetNodeController());
 		}
-		StartNavigation();
+		//StartNavigation();
 
 		UIController.Instance.ShowView<UIMapView>();
 
@@ -36,7 +36,7 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 
 	private void OnEnter() {
 		CameraController.Instance.SetTapAction(() => {
-			StopNavigation();
+			//StopNavigation();
 			for (int i = 0; i < levels.Length; i++) {
 				if (levels[i].TouchInputRaycast()) {
 					CameraController.Instance.SetTapAction(null);

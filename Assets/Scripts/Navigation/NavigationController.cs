@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -28,6 +27,8 @@ public class NavigationController : MonoBehaviour {
 			});
 		});
 
+		points.ForEach(p => p.ClearNextNodes());
+
 		Dictionary<string, string> alreadyProcessedConnexions = new();
 
 		nodeControllers.ForEach(nodeController => {
@@ -36,7 +37,10 @@ public class NavigationController : MonoBehaviour {
 				string n0n1Name = n0.name + n1.name;
 				string n1n0Name = n1.name + n0.name;
 
-				if (!alreadyProcessedConnexions.ContainsKey(n0n1Name) && !alreadyProcessedConnexions.ContainsKey(n1n0Name)) {
+				bool allow = nodeControllers.Count > 1 || nodeController.GetAllNodes().Contains(n0) &&
+					nodeController.GetAllNodes().Contains(n1);
+
+				if (allow && !alreadyProcessedConnexions.ContainsKey(n0n1Name) && !alreadyProcessedConnexions.ContainsKey(n1n0Name)) {
 
 					alreadyProcessedConnexions.Add(n0n1Name, null);
 					alreadyProcessedConnexions.Add(n1n0Name, null);
@@ -128,6 +132,7 @@ public class NavigationController : MonoBehaviour {
 
 	public void Stop() {
 		points = new NavigationPoint[0];
+		adjacents = null;
 		conflictPoints.Clear();
 		paths.Clear();
 		for (int i = 0; i < agents.Count; i++) {
@@ -265,26 +270,52 @@ public class NavigationController : MonoBehaviour {
 		for (int i = 0; i < pointOfInterests.Count; i++) {
 			for (int j = 0; j < linkedNodes.Count; j++) {
 				if (linkedNodes[j].IsHeadNode) {
-					NavigationPoint from = linkedNodes[j].StartNavigationPoint;
-					NavigationPoint to = pointOfInterests[i].EndNavigationPoint;
-					if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
+					if (FindPathWithLinkedNode(linkedNodes[j], pointOfInterests[i], out List<NavigationPoint> path)) {
 						paths.Add(linkedNodes[j].name + "_" + pointOfInterests[i].name, path);
 					} else {
 						missingPaths.Add((linkedNodes[j].name, pointOfInterests[i].name));
-						//Debug.LogError("Path not found h0");
 					}
 				} else {
-					NavigationPoint from = pointOfInterests[i].StartNavigationPoint;
-					NavigationPoint to = linkedNodes[j].EndNavigationPoint;
-					if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
+					if (FindPathWithLinkedNode(pointOfInterests[i], linkedNodes[j], out List<NavigationPoint> path)) {
 						paths.Add(pointOfInterests[i].name + "_" + linkedNodes[j].name, path);
 					} else {
 						missingPaths.Add((pointOfInterests[i].name, linkedNodes[j].name));
-						//Debug.LogError("Path not found h1");
 					}
 				}
 			}
 		}
+	}
+
+	private bool FindPathWithLinkedNode(LinkedNode fromLinkedNode, PointOfInterest toPointOfInterest, out List<NavigationPoint> path) {
+		path = null;
+		List<NavigationPoint> navigationPoints = new(fromLinkedNode.GetNavigationRightPoints());
+		navigationPoints.AddRange(fromLinkedNode.GetNavigationLeftPoints());
+		NavigationPoint to = toPointOfInterest.EndNavigationPoint;
+		for (int i = 0; i < navigationPoints.Count; i++) {
+			NavigationPoint from = navigationPoints[i];
+			if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path1)) {
+				if (path == null || path.Count > path1.Count) {
+					path = path1;
+				}
+			}
+		}
+		return path != null;
+	}
+
+	private bool FindPathWithLinkedNode(PointOfInterest fromPointOfInterest, LinkedNode toLinkedNode, out List<NavigationPoint> path) {
+		path = null;
+		List<NavigationPoint> navigationPoints = new(toLinkedNode.GetNavigationRightPoints());
+		navigationPoints.AddRange(toLinkedNode.GetNavigationLeftPoints());
+		NavigationPoint from = fromPointOfInterest.StartNavigationPoint;
+		for (int i = 0; i < navigationPoints.Count; i++) {
+			NavigationPoint to = navigationPoints[i];
+			if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path1)) {
+				if (path == null || path.Count > path1.Count) {
+					path = path1;
+				}
+			}
+		}
+		return path != null;
 	}
 
 	private void SetConflictPoints() {

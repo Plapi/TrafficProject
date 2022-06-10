@@ -11,7 +11,8 @@ public class UILevelView : UIView<UILevelView.Data> {
 	[SerializeField] private Button playButton = default;
 
 	public override void OnBack() {
-		UIController.Instance.HideCurrentView(DataValue.onBack);
+		UIController.Instance.HideCurrentView();
+		DataValue.onBack?.Invoke();
 	}
 
 	public override void OnInit() {

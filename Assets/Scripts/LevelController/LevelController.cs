@@ -15,6 +15,12 @@ public class LevelController : MonoBehaviour {
 	private bool updateConfirmRoadPanelPos;
 	private bool updateNode;
 
+	private bool inPlayMode;
+	private List<PointOfInterest> pointOfInterests;
+	private List<LinkedNode> linkedNodes;
+
+	private readonly List<UIPointOfInterestPanel> pointOfInterestPanels = new();
+
 	private Action onExit;
 
 	public void Init(Action onExit) {
@@ -33,10 +39,12 @@ public class LevelController : MonoBehaviour {
 
 	private void OnExit() {
 		enabled = false;
+		ClearPointOfInterestPanels();
 		onExit?.Invoke();
 	}
 
 	public void OnEnter() {
+		SetPointOfInterestPanels(nodeController.GetPointOfInterests());
 		UIController.Instance.GetView<UILevelView>().Init(new UILevelView.Data {
 			onBack = OnExit,
 			onRoadButton = () => {
@@ -58,9 +66,12 @@ public class LevelController : MonoBehaviour {
 					intersections = nodeController.GetIntersections()
 				});
 			}, onPlayButton = () => {
-				UIController.Instance.ShowView<UIPlayModeView>();
-				navigationController.SetPoints(new List<NodeController> { nodeController });
-				nodeController.StartIntersectionsWithSemaphore();
+				if (CanStartPlayMode()) {
+					StartPlayMode();
+				} else {
+					navigationController.Stop();
+					Debug.LogError("Can not start play mode");
+				}
 			}
 		});
 
@@ -88,10 +99,7 @@ public class LevelController : MonoBehaviour {
 		});
 
 		UIController.Instance.GetView<UIPlayModeView>().Init(new UIPlayModeView.Data {
-			onBack = () => {
-				navigationController.Stop();
-				nodeController.StopIntersectionsWithSemaphores();
-			},
+			onBack = StopPlayMode,
 			onNormalSpeedButton = () => {
 
 			},
@@ -116,7 +124,47 @@ public class LevelController : MonoBehaviour {
 		enabled = true;
 	}
 
+	private bool CanStartPlayMode() {
+		navigationController.SetPoints(new List<NodeController> { nodeController }, out List<(string, string)> missingPaths, nodeController.GetLinkedNodes());
+		return missingPaths.Count == 0;
+	}
+
+	private void StartPlayMode() {
+		UIController.Instance.ShowView<UIPlayModeView>();
+		nodeController.StartIntersectionsWithSemaphore();
+
+		pointOfInterests = nodeController.GetPointOfInterests();
+		linkedNodes = nodeController.GetLinkedNodes();
+
+		pointOfInterests.ForEach(pointOfInterest => {
+			pointOfInterest.InitProgressSpawnTime();
+			pointOfInterest.CarsCountStartedWithThisDestination = 0;
+		});
+		linkedNodes.ForEach(linkedNode => {
+			if (linkedNode.IsHeadNode) {
+				linkedNode.InitProgressSpawnTime();
+			}
+		});
+
+		inPlayMode = true;
+	}
+
+	private void StopPlayMode() {
+		navigationController.Stop();
+		nodeController.StopIntersectionsWithSemaphores();
+		inPlayMode = false;
+		pointOfInterests.ForEach(pointOfInterest => pointOfInterest.ResetCarsProgress());
+		pointOfInterestPanels.ForEach(pointOfInterestPanel => pointOfInterestPanel.UpdateUI(false));
+	}
+
 	private void Update() {
+		pointOfInterestPanels.ForEach(panel => panel.UpdatePosition());
+
+		if (inPlayMode) {
+			PlayModeUpdate();
+			return;
+		}
+
 		if (nodeController.enabled) {
 
 			if (!Utils.IsOverUI() && CameraController.Instance.TouchesCount < 2) {
@@ -145,6 +193,72 @@ public class LevelController : MonoBehaviour {
 			MapController.Instance.ConfirmRoadPanel.UpdateAnchorPos(nodeController.CurrentNode.transform);
 			MapController.Instance.ConfirmRoadPanel.SetAcceptButtonInteractable(nodeController.CurrentNodeCanBePlaced);
 		}
+	}
+
+	private void SetPointOfInterestPanels(List<PointOfInterest> pointOfInterests) {
+		pointOfInterests.ForEach(pointOfInterest => {
+			UIPointOfInterestPanel pointOfInterestPanel = MapController.Instance.PointOfInterestPanel;
+			UIPointOfInterestPanel panel = Instantiate(pointOfInterestPanel, pointOfInterestPanel.transform.parent);
+			panel.transform.SetSiblingIndex(0);
+			panel.Init(pointOfInterest);
+			panel.ShowAnim();
+			pointOfInterestPanels.Add(panel);
+		});
+	}
+
+	private void ClearPointOfInterestPanels() {
+		pointOfInterestPanels.ForEach(p => {
+			p.HideAnim(() => {
+				Destroy(p.gameObject);
+			});
+		});
+		pointOfInterestPanels.Clear();
+	}
+
+	private void PlayModeUpdate() {
+		pointOfInterests.ForEach(pointOfInterest => {
+			pointOfInterest.UpdateSpawnTime();
+			if (pointOfInterest.CanSpawnCar()) {
+				pointOfInterest.InitProgressSpawnTime();
+				TravelCar(pointOfInterest.name, pointOfInterest);
+			}
+		});
+		linkedNodes.ForEach(linkedNode => {
+			if (linkedNode.IsHeadNode) {
+				linkedNode.UpdateSpawnTime();
+				if (linkedNode.CanSpawnCar()) {
+					linkedNode.InitProgressSpawnTime();
+					TravelCar(linkedNode.name);
+				}
+			}
+		});
+	}
+
+	private void TravelCar(string startName, PointOfInterest exlude = null) {
+		navigationController.TravelAgent(startName, GetDestination(exlude, out PointOfInterest pointOfInterest), () => {
+			if (pointOfInterest != null) {
+				pointOfInterest.OnCarEnter();
+			}
+		});
+	}
+
+	private string GetDestination(PointOfInterest exlude, out PointOfInterest pointOfInterest) {
+		pointOfInterest = null;
+		List<PointOfInterest> list = new(pointOfInterests);
+		if (exlude != null) {
+			list.Remove(exlude);
+		}
+		if (list.Count > 0) {
+			int min = pointOfInterests[0].CarsCountStartedWithThisDestination;
+			for (int i = 1; i < pointOfInterests.Count; i++) {
+				if (min > pointOfInterests[i].CarsCountStartedWithThisDestination) {
+					min = pointOfInterests[i].CarsCountStartedWithThisDestination;
+				}
+			}
+			pointOfInterest = list.FindAll(l => l.CarsCountStartedWithThisDestination == min).Random();
+			return pointOfInterest.name;
+		}
+		return linkedNodes.FindAll(lNode => !lNode.IsHeadNode).Random().name;
 	}
 
 	public void DeleteData() {

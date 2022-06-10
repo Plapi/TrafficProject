@@ -48,7 +48,7 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 	}
 
 	private void StartNavigation() {
-		mainNavigationController.SetPoints(nodeControllers);
+		mainNavigationController.SetPoints(nodeControllers, out _);
 		nodeControllers.ForEach(n => {
 			n.StartIntersectionsWithSemaphore();
 		});

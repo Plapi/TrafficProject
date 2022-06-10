@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +9,7 @@ public class NavigationController : MonoBehaviour {
 	private int[][] adjacents;
 
 	private List<PointOfInterest> pointOfInterests;
+	private List<LinkedNode> linkedNodes;
 	private readonly Dictionary<string, List<NavigationPoint>> conflictPoints = new();
 
 	private readonly Dictionary<string, List<NavigationPoint>> paths = new();
@@ -15,7 +17,9 @@ public class NavigationController : MonoBehaviour {
 
 	private int totalAgents;
 
-	public void SetPoints(List<NodeController> nodeControllers) {
+	public void SetPoints(List<NodeController> nodeControllers, out List<(string, string)> missingPaths, List<LinkedNode> linkedNodes = null) {
+		this.linkedNodes = linkedNodes;
+
 		List<NavigationPoint> points = new();
 		nodeControllers.ForEach(nodeController => {
 			nodeController.GetAllNodes().ForEach(n => {
@@ -105,19 +109,21 @@ public class NavigationController : MonoBehaviour {
 			pofs.AddRange(nodeController.GetPointOfInterests());
 		});
 
-		SetPoints(points, pofs);
+		missingPaths = new();
+		SetPoints(points, pofs, missingPaths);
 	}
 
-	public void SetPoints(List<NavigationPoint> points, List<PointOfInterest> pointOfInterests) {
+	private void SetPoints(List<NavigationPoint> points, List<PointOfInterest> pointOfInterests, List<(string, string)> missingPaths) {
 		this.points = points.ToArray();
 		this.pointOfInterests = pointOfInterests;
 
 		adjacents = BFS<NavigationPoint>.GetAdjacents(this.points);
 
 		SetConflictPoints();
-		//SetPaths();
-
-		//this.Delay(2f, () => StartCoroutine(SpawnAgentsCorutine()));
+		SetPaths(missingPaths);
+		if (linkedNodes != null) {
+			SetPathsWithLinkedNodes(missingPaths);
+		}
 	}
 
 	public void Stop() {
@@ -132,37 +138,7 @@ public class NavigationController : MonoBehaviour {
 		StopAllCoroutines();
 	}
 
-	private IEnumerator SpawnAgentsCorutine() {
-		while (true) {
-			SpawnAgents();
-			yield return new WaitForSeconds(3f);
-		}
-	}
-
-	private void SpawnAgents() {
-		if (agents.Count >= 50) {
-			return;
-		}
-		for (int i = 0; i < pointOfInterests.Count; i++) {
-			TravelAgent(pointOfInterests[i]);
-		}
-	}
-
 	private void LateUpdate() {
-
-		if (Input.GetKeyDown(KeyCode.B)) {
-			for (int i = 0; i < points.Length; i++) {
-				List<NavigationAgent> agents = points[i].GetAgents();
-				if (agents.Count > 0) {
-					Debug.LogError("agents count:" + agents.Count);
-				}
-			}
-		}
-
-		if (Input.GetKeyDown(KeyCode.A)) {
-			SpawnAgents();
-		}
-
 		for (int i = 0; i < agents.Count; i++) {
 			if (AgentCollidesWithOthers(agents[i], agents[i].NextNavPoint.GetAgents(), out NavigationAgent otherAgent0)
 				&& otherAgent0.BlockedByOtherAgent != agents[i]) {
@@ -242,31 +218,26 @@ public class NavigationController : MonoBehaviour {
 		return false;
 	}
 
-	private void TravelAgent(PointOfInterest start) {
-
-		PointOfInterest end = GetRandomPointofInterest(start);
-		List<NavigationPoint> path = paths[start.name + "_" + end.name];
+	public void TravelAgent(string startName, string endName, Action onComplete) {
+		string key = startName + "_" + endName;
+		if (!paths.ContainsKey(key)) {
+			Debug.LogError($"Key not found {key}");
+			return;
+		}
 
 		NavigationAgent agent = Instantiate(Resources.Load<NavigationAgent>("Cars/Car0"));
 		agent.name = $"agent{totalAgents}";
 		agent.transform.parent = transform;
-		agent.Go(path, () => {
-			this.Delay(1f, () => {
-				agents.Remove(agent);
-				agent.Destroy();
-			});
+		agent.Go(paths[key], () => {
+			agents.Remove(agent);
+			agent.Destroy();
+			onComplete?.Invoke();
 		});
 		agents.Add(agent);
 		totalAgents++;
 	}
 
-	private PointOfInterest GetRandomPointofInterest(PointOfInterest exlude) {
-		List<PointOfInterest> list = new(pointOfInterests);
-		list.Remove(exlude);
-		return list.Random();
-	}
-
-	private void SetPaths() {
+	private void SetPaths(List<(string, string)> missingPaths) {
 		for (int i = 0; i < pointOfInterests.Count; i++) {
 			PointOfInterest start = pointOfInterests[i];
 			for (int j = 0; j < pointOfInterests.Count; j++) {
@@ -279,13 +250,40 @@ public class NavigationController : MonoBehaviour {
 					if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
 						paths.Add(start.name + "_" + end.name, path);
 					} else {
-						Debug.LogError($"Path not found {start.name} {from.Index}, {to.Index} {end.name}");
-						Debug.DrawLine(from.Position, to.Position, Color.red);
-						Debug.Break();
+						missingPaths.Add((start.name, end.name));
+						//missingPaths.Add()
+						//Debug.LogError($"Path not found {start.name} {from.Index}, {to.Index} {end.name}");
+						//Debug.DrawLine(from.Position, to.Position, Color.red);
+						//Debug.Break();
 					}
 				}
 			}
+		}
+	}
 
+	private void SetPathsWithLinkedNodes(List<(string, string)> missingPaths) {
+		for (int i = 0; i < pointOfInterests.Count; i++) {
+			for (int j = 0; j < linkedNodes.Count; j++) {
+				if (linkedNodes[j].IsHeadNode) {
+					NavigationPoint from = linkedNodes[j].StartNavigationPoint;
+					NavigationPoint to = pointOfInterests[i].EndNavigationPoint;
+					if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
+						paths.Add(linkedNodes[j].name + "_" + pointOfInterests[i].name, path);
+					} else {
+						missingPaths.Add((linkedNodes[j].name, pointOfInterests[i].name));
+						//Debug.LogError("Path not found h0");
+					}
+				} else {
+					NavigationPoint from = pointOfInterests[i].StartNavigationPoint;
+					NavigationPoint to = linkedNodes[j].EndNavigationPoint;
+					if (BFS<NavigationPoint>.FindPath(points, adjacents, from, to, out List<NavigationPoint> path)) {
+						paths.Add(pointOfInterests[i].name + "_" + linkedNodes[j].name, path);
+					} else {
+						missingPaths.Add((pointOfInterests[i].name, linkedNodes[j].name));
+						//Debug.LogError("Path not found h1");
+					}
+				}
+			}
 		}
 	}
 

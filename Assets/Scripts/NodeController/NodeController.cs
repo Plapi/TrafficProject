@@ -12,7 +12,7 @@ public class NodeController : MonoBehaviour {
 	[SerializeField] private List<NodeRestrictedArea> restrictedAreas = default;
 
 	private readonly List<Node> nodes = new();
-	private readonly List<Node> otherLinkedNodes = new();
+	private readonly List<LinkedNode> otherLinkedNodes = new();
 
 	private BoxCollider map;
 	private Node prevNode;
@@ -105,6 +105,12 @@ public class NodeController : MonoBehaviour {
 
 	public List<Node> GetAllNodes() {
 		return nodes;
+	}
+
+	public List<LinkedNode> GetLinkedNodes() {
+		List<LinkedNode> list = new(linkedNodes);
+		list.AddRange(otherLinkedNodes);
+		return list;
 	}
 
 	public List<Node> GetIntersections() {
@@ -518,7 +524,7 @@ public class NodeController : MonoBehaviour {
 			if (!nodesData[i].isStatic) {
 				nodesData[i].position = JSONVector3.FromVector3(nodes[i].transform.position);
 			}
-			if (otherLinkedNodes.Contains(nodes[i])) {
+			if (nodes[i] is LinkedNode linkedNode && otherLinkedNodes.Contains(linkedNode)) {
 				nodesData[i].connexions = new int[0];
 				continue;
 			}

@@ -624,6 +624,84 @@ Transform:
   m_Father: {fileID: 1958026850}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &43601014
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 43601015}
+  - component: {fileID: 43601017}
+  - component: {fileID: 43601016}
+  m_Layer: 5
+  m_Name: Checkmark
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &43601015
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43601014}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 228894232}
+  - {fileID: 1831419622}
+  m_Father: {fileID: 1711274867}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 140.00002}
+  m_SizeDelta: {x: 65, y: 65}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &43601016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43601014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 7316f2b35321a8946a81eaf5a9c5289c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &43601017
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43601014}
+  m_CullTransparentMesh: 1
 --- !u!1 &45124634
 GameObject:
   m_ObjectHideFlags: 0
@@ -1874,6 +1952,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 1775292684}
   destinationMark: {fileID: 1428410580}
+  spawnTime: 2
 --- !u!1 &131299390
 GameObject:
   m_ObjectHideFlags: 0
@@ -2836,6 +2915,9 @@ MonoBehaviour:
   otherNode: {fileID: 623241830}
   restrictedArea: {fileID: 850160188}
   destinationMark: {fileID: 986892921}
+  carsTarget: 10
+  spawnTime: 2
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &181741175
 GameObject:
   m_ObjectHideFlags: 0
@@ -3413,6 +3495,85 @@ MonoBehaviour:
   otherNode: {fileID: 1286562447}
   restrictedArea: {fileID: 1608733625}
   destinationMark: {fileID: 235259444}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
+--- !u!1 &228894231
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 228894232}
+  - component: {fileID: 228894234}
+  - component: {fileID: 228894233}
+  m_Layer: 5
+  m_Name: Checkmark
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &228894232
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 228894231}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 43601015}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 5, y: -3}
+  m_SizeDelta: {x: 70, y: 70}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &228894233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 228894231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.14509805, g: 0.78823537, b: 0.5019608, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 39b0ec792c1397d4490e248a826b5be3, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &228894234
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 228894231}
+  m_CullTransparentMesh: 1
 --- !u!1 &233395721
 GameObject:
   m_ObjectHideFlags: 0
@@ -4266,6 +4427,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 938057938}
   destinationMark: {fileID: 317416192}
+  spawnTime: 2
 --- !u!1 &251571810
 GameObject:
   m_ObjectHideFlags: 0
@@ -5329,6 +5491,9 @@ MonoBehaviour:
   otherNode: {fileID: 928553997}
   restrictedArea: {fileID: 1126581514}
   destinationMark: {fileID: 1525090499}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &346852873
 GameObject:
   m_ObjectHideFlags: 0
@@ -6171,6 +6336,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 1801725014}
   destinationMark: {fileID: 140552149}
+  spawnTime: 2
 --- !u!1 &392821787
 GameObject:
   m_ObjectHideFlags: 0
@@ -6264,6 +6430,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 1012564682}
   destinationMark: {fileID: 979048126}
+  spawnTime: 2
 --- !u!1 &401089919
 GameObject:
   m_ObjectHideFlags: 0
@@ -6312,6 +6479,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 1008288532}
   destinationMark: {fileID: 2040915487}
+  spawnTime: 2
 --- !u!1 &402605712
 GameObject:
   m_ObjectHideFlags: 0
@@ -6344,6 +6512,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 2000328757}
   destinationMark: {fileID: 742110383}
+  spawnTime: 2
 --- !u!4 &402605714
 Transform:
   m_ObjectHideFlags: 0
@@ -6591,6 +6760,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 1725799262}
   destinationMark: {fileID: 131299391}
+  spawnTime: 2
 --- !u!4 &421412579
 Transform:
   m_ObjectHideFlags: 0
@@ -9691,6 +9861,9 @@ MonoBehaviour:
   otherNode: {fileID: 988078809}
   restrictedArea: {fileID: 1170777921}
   destinationMark: {fileID: 1008908128}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &575289549
 GameObject:
   m_ObjectHideFlags: 0
@@ -11947,7 +12120,7 @@ GameObject:
   - component: {fileID: 698862691}
   - component: {fileID: 698862690}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11966,7 +12139,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1711274867}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -14573,6 +14746,9 @@ MonoBehaviour:
   otherNode: {fileID: 464930681}
   restrictedArea: {fileID: 1370217809}
   destinationMark: {fileID: 652737447}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &819086040
 GameObject:
   m_ObjectHideFlags: 0
@@ -15077,6 +15253,9 @@ MonoBehaviour:
   otherNode: {fileID: 215779749}
   restrictedArea: {fileID: 520010369}
   destinationMark: {fileID: 1982357324}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &846979925
 GameObject:
   m_ObjectHideFlags: 0
@@ -17380,6 +17559,9 @@ MonoBehaviour:
   otherNode: {fileID: 1465729147}
   restrictedArea: {fileID: 45124636}
   destinationMark: {fileID: 1538574258}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &928553995
 GameObject:
   m_ObjectHideFlags: 0
@@ -17736,6 +17918,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 250231626}
   destinationMark: {fileID: 1538573291}
+  spawnTime: 2
 --- !u!1 &940219798
 GameObject:
   m_ObjectHideFlags: 0
@@ -17999,6 +18182,9 @@ MonoBehaviour:
   otherNode: {fileID: 1188020784}
   restrictedArea: {fileID: 564503232}
   destinationMark: {fileID: 1892529711}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &957490107
 GameObject:
   m_ObjectHideFlags: 0
@@ -19235,6 +19421,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 401089921}
   destinationMark: {fileID: 852539415}
+  spawnTime: 2
 --- !u!1 &1008908124
 GameObject:
   m_ObjectHideFlags: 0
@@ -19396,6 +19583,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 398665680}
   destinationMark: {fileID: 846979929}
+  spawnTime: 2
 --- !u!4 &1012564683
 Transform:
   m_ObjectHideFlags: 0
@@ -19497,6 +19685,9 @@ MonoBehaviour:
   otherNode: {fileID: 1404427203}
   restrictedArea: {fileID: 10541305}
   destinationMark: {fileID: 1426631160}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1031830023
 GameObject:
   m_ObjectHideFlags: 0
@@ -20096,6 +20287,9 @@ MonoBehaviour:
   otherNode: {fileID: 791432336}
   restrictedArea: {fileID: 594490114}
   destinationMark: {fileID: 233395725}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1058219615
 GameObject:
   m_ObjectHideFlags: 0
@@ -20898,6 +21092,9 @@ MonoBehaviour:
   otherNode: {fileID: 1107300960}
   restrictedArea: {fileID: 1478678197}
   destinationMark: {fileID: 1055658851}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1091126605
 GameObject:
   m_ObjectHideFlags: 0
@@ -21378,6 +21575,9 @@ MonoBehaviour:
   otherNode: {fileID: 940219800}
   restrictedArea: {fileID: 1908885688}
   destinationMark: {fileID: 1269161938}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1118604071
 GameObject:
   m_ObjectHideFlags: 0
@@ -21649,7 +21849,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.6666667}
-  m_EffectDistance: {x: 0.3, y: -0.3}
+  m_EffectDistance: {x: 0.2, y: -0.2}
   m_UseGraphicAlpha: 1
 --- !u!1 &1154995650
 GameObject:
@@ -23234,6 +23434,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 1786985431}
   destinationMark: {fileID: 1804595085}
+  spawnTime: 2
 --- !u!1 &1220184704
 GameObject:
   m_ObjectHideFlags: 0
@@ -23712,6 +23913,9 @@ MonoBehaviour:
   otherNode: {fileID: 1779724846}
   restrictedArea: {fileID: 1579096065}
   destinationMark: {fileID: 488458341}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1243221702
 GameObject:
   m_ObjectHideFlags: 0
@@ -24296,6 +24500,9 @@ MonoBehaviour:
   otherNode: {fileID: 1462088487}
   restrictedArea: {fileID: 2081775706}
   destinationMark: {fileID: 804718401}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1284484315
 GameObject:
   m_ObjectHideFlags: 0
@@ -25409,6 +25616,9 @@ MonoBehaviour:
   otherNode: {fileID: 887314743}
   restrictedArea: {fileID: 1533908516}
   destinationMark: {fileID: 1220184708}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1355395723
 GameObject:
   m_ObjectHideFlags: 0
@@ -26648,6 +26858,9 @@ MonoBehaviour:
   otherNode: {fileID: 689751125}
   restrictedArea: {fileID: 1958026851}
   destinationMark: {fileID: 1471469641}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1400278440
 GameObject:
   m_ObjectHideFlags: 0
@@ -29894,7 +30107,7 @@ RectTransform:
   m_Children:
   - {fileID: 1142118029}
   m_Father: {fileID: 1711274867}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -30456,6 +30669,9 @@ MonoBehaviour:
   otherNode: {fileID: 1660570437}
   restrictedArea: {fileID: 1619808710}
   destinationMark: {fileID: 1937009486}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1579096063
 GameObject:
   m_ObjectHideFlags: 0
@@ -30562,6 +30778,9 @@ MonoBehaviour:
   otherNode: {fileID: 1767730226}
   restrictedArea: {fileID: 2026516275}
   destinationMark: {fileID: 470303549}
+  carsTarget: 12
+  spawnTime: 2
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1581601989
 GameObject:
   m_ObjectHideFlags: 0
@@ -30876,6 +31095,9 @@ MonoBehaviour:
   otherNode: {fileID: 1230441608}
   restrictedArea: {fileID: 1591053379}
   destinationMark: {fileID: 54894685}
+  carsTarget: 12
+  spawnTime: 2
+  CarsCountStartedWithThisDestination: 0
 --- !u!4 &1586470885
 Transform:
   m_ObjectHideFlags: 0
@@ -31641,6 +31863,9 @@ MonoBehaviour:
   otherNode: {fileID: 1861553670}
   restrictedArea: {fileID: 1054196037}
   destinationMark: {fileID: 947588316}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1634816030
 GameObject:
   m_ObjectHideFlags: 0
@@ -32038,6 +32263,9 @@ MonoBehaviour:
   otherNode: {fileID: 1230159101}
   restrictedArea: {fileID: 1444208463}
   destinationMark: {fileID: 1830772853}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1001 &1637831397
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -32211,6 +32439,82 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   drawGizmos: 0
+--- !u!1 &1660588606
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1660588607}
+  - component: {fileID: 1660588609}
+  - component: {fileID: 1660588608}
+  m_Layer: 5
+  m_Name: CircleFill
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1660588607
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1660588606}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1711274867}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 140}
+  m_SizeDelta: {x: 50, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1660588608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1660588606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: afc395622ea35b34b8d1cddfdab5ed08, type: 3}
+  m_Type: 3
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 0
+  m_FillClockwise: 1
+  m_FillOrigin: 2
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1660588609
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1660588606}
+  m_CullTransparentMesh: 1
 --- !u!1 &1670612953
 GameObject:
   m_ObjectHideFlags: 0
@@ -33001,8 +33305,10 @@ RectTransform:
   - {fileID: 488349649}
   - {fileID: 1091126606}
   - {fileID: 1266181311}
+  - {fileID: 1660588607}
   - {fileID: 698862689}
   - {fileID: 1535648000}
+  - {fileID: 43601015}
   m_Father: {fileID: 676368649}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -33023,6 +33329,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d13ae63b31c04dd1bdbd8fe1d331686, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  carPivot: {fileID: 1535648000}
+  text: {fileID: 698862690}
+  circleFill: {fileID: 1660588608}
 --- !u!1 &1717556652
 GameObject:
   m_ObjectHideFlags: 0
@@ -33357,6 +33666,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 421412578}
   destinationMark: {fileID: 1875516396}
+  spawnTime: 2
 --- !u!1 &1729765040
 GameObject:
   m_ObjectHideFlags: 0
@@ -33858,6 +34168,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 124987024}
   destinationMark: {fileID: 1890616747}
+  spawnTime: 2
 --- !u!1 &1779724844
 GameObject:
   m_ObjectHideFlags: 0
@@ -34018,6 +34329,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 1218741663}
   destinationMark: {fileID: 864096678}
+  spawnTime: 2
 --- !u!4 &1786985432
 Transform:
   m_ObjectHideFlags: 0
@@ -34177,6 +34489,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 392096740}
   destinationMark: {fileID: 166421366}
+  spawnTime: 2
 --- !u!4 &1801725015
 Transform:
   m_ObjectHideFlags: 0
@@ -34677,6 +34990,98 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   text: {fileID: 2077762222}
+--- !u!1 &1831419621
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1831419622}
+  - component: {fileID: 1831419625}
+  - component: {fileID: 1831419624}
+  - component: {fileID: 1831419623}
+  m_Layer: 5
+  m_Name: Car
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1831419622
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1831419621}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 43601015}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -5, y: 10}
+  m_SizeDelta: {x: 40, y: 40}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1831419623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1831419621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.6666667}
+  m_EffectDistance: {x: 0.2, y: -0.2}
+  m_UseGraphicAlpha: 1
+--- !u!114 &1831419624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1831419621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 07ebaf33a176f451f8d555f6e841e857, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1831419625
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1831419621}
+  m_CullTransparentMesh: 1
 --- !u!1 &1842941602
 GameObject:
   m_ObjectHideFlags: 0
@@ -36371,6 +36776,9 @@ MonoBehaviour:
   otherNode: {fileID: 244375325}
   restrictedArea: {fileID: 576778272}
   destinationMark: {fileID: 1450454881}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1888060997
 GameObject:
   m_ObjectHideFlags: 0
@@ -36424,6 +36832,9 @@ MonoBehaviour:
   otherNode: {fileID: 704450275}
   restrictedArea: {fileID: 514161693}
   destinationMark: {fileID: 435716589}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &1890616743
 GameObject:
   m_ObjectHideFlags: 0
@@ -38548,6 +38959,7 @@ MonoBehaviour:
   drawGizmos: 1
   linkNode: {fileID: 402605713}
   destinationMark: {fileID: 1375689760}
+  spawnTime: 2
 --- !u!1 &2007569983
 GameObject:
   m_ObjectHideFlags: 0
@@ -38871,6 +39283,9 @@ MonoBehaviour:
   otherNode: {fileID: 1402540394}
   restrictedArea: {fileID: 2030236343}
   destinationMark: {fileID: 165934049}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &2015949262
 GameObject:
   m_ObjectHideFlags: 0
@@ -40695,6 +41110,9 @@ MonoBehaviour:
   otherNode: {fileID: 1498769004}
   restrictedArea: {fileID: 1092722934}
   destinationMark: {fileID: 1420272938}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &2112093157
 GameObject:
   m_ObjectHideFlags: 0
@@ -40917,6 +41335,9 @@ MonoBehaviour:
   otherNode: {fileID: 1858887555}
   restrictedArea: {fileID: 193422649}
   destinationMark: {fileID: 838537535}
+  carsTarget: 0
+  spawnTime: 0
+  CarsCountStartedWithThisDestination: 0
 --- !u!1 &2118758014
 GameObject:
   m_ObjectHideFlags: 0

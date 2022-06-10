@@ -423,6 +423,10 @@ public static class Utils {
 		return -1;
 	}
 
+	public static Tween ValueTo(this MonoBehaviour behaviour, float from, float to, float duration, Ease ease = Ease.Linear, Action<float> onUpdate = null, Action onComplete = null) {
+		return DOTween.To(() => from, progress => onUpdate?.Invoke(progress), to, duration).SetEase(ease).OnComplete(() => onComplete?.Invoke());
+	}
+
 	public static Tween SimpleTransition(float duration, Ease ease = Ease.Linear, Action<float> onUpdate = null, Action onComplete = null) {
 		return DOTween.To(() => 0f, progress => onUpdate?.Invoke(progress), 1f, duration).SetEase(ease).OnComplete(() => onComplete?.Invoke());
 	}

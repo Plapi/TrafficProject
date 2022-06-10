@@ -223,7 +223,11 @@ public class NavigationController : MonoBehaviour {
 		return false;
 	}
 
-	public void TravelAgent(string startName, string endName, Action onComplete) {
+	public bool HasPath(PointOfInterest p0, PointOfInterest p1) {
+		return paths.ContainsKey(p0.name + "_" + p1.name);
+	}
+
+	public void TravelAgent(string startName, string endName, Action onComplete = null) {
 		string key = startName + "_" + endName;
 		if (!paths.ContainsKey(key)) {
 			Debug.LogError($"Key not found {key}");

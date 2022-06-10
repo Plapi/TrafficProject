@@ -158,7 +158,7 @@ public class LevelController : MonoBehaviour {
 		nodeController.StopIntersectionsWithSemaphores();
 		inPlayMode = false;
 		pointOfInterests.ForEach(pointOfInterest => pointOfInterest.ResetCarsProgress());
-		pointOfInterestPanels.ForEach(pointOfInterestPanel => pointOfInterestPanel.UpdateUI(false));
+		pointOfInterestPanels.ForEach(pointOfInterestPanel => pointOfInterestPanel.ResetUI());
 	}
 
 	private void Update() {

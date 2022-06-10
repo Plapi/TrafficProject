@@ -9,10 +9,12 @@ public class UIPointOfInterestPanel : UIItem {
 	[SerializeField] private RectTransform carPivot = default;
 	[SerializeField] private TextMeshProUGUI text = default;
 	[SerializeField] private Image circleFill = default;
+	[SerializeField] private Transform checkmark = default;
 
 	private PointOfInterest pointOfInterest;
 
 	private Tween fillTween;
+	private Tween carPivotTween;
 
 	public void Init(PointOfInterest pointOfInterest) {
 		this.pointOfInterest = pointOfInterest;
@@ -41,18 +43,29 @@ public class UIPointOfInterestPanel : UIItem {
 	}
 
 	private void OnCarEnterPointOfInterest() {
+		if (checkmark.gameObject.activeSelf) {
+			return;
+		}
+
 		UpdateUI(true);
 		SpinCarPivot();
+		if (pointOfInterest.CarsProgress >= pointOfInterest.CarsTarget) {
+			checkmark.gameObject.SetActive(true);
+			checkmark.localScale = Vector3.one * 0.01f;
+			checkmark.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBounce);
+		}
+
+		transform.DOPunchScale(Vector3.one * 0.2f, 0.25f);
 	}
 
 	public void UpdateUI(bool animCircleFill) {
 		text.text = Mathf.Max(0, pointOfInterest.CarsTarget - pointOfInterest.CarsProgress).ToString();
 
 		float fillProgress = (float)pointOfInterest.CarsProgress / pointOfInterest.CarsTarget;
+		if (fillTween != null) {
+			fillTween.Kill(false);
+		}
 		if (animCircleFill) {
-			if (fillTween != null) {
-				fillTween.Kill(false);
-			}
 			fillTween = this.ValueTo(circleFill.fillAmount, fillProgress, 0.75f, Ease.OutExpo, value => {
 				circleFill.fillAmount = value;
 			}, () => {
@@ -61,22 +74,21 @@ public class UIPointOfInterestPanel : UIItem {
 		} else {
 			circleFill.fillAmount = fillProgress;
 		}
+	}
 
-		transform.DOPunchScale(Vector3.one * 0.2f, 0.25f);
+	public void ResetUI() {
+		UpdateUI(false);
+		checkmark.gameObject.SetActive(false);
 	}
 
 	private void SpinCarPivot() {
-		carPivot.DORotate(new Vector3(0f, 0f, 360f), 0.75f, RotateMode.LocalAxisAdd).SetEase(Ease.OutBack);
-	}
-
-	/*public float punchScale = 0.1f;
-	public float duration = 0.25f;
-	public int vibrato = 10;
-	public float elasticity = 1;
-
-	private void Update() {
-		if (Input.GetKeyDown(KeyCode.A)) {
-			transform.DOPunchScale(Vector3.one * punchScale, 0.25f);
+		if (carPivotTween != null) {
+			carPivotTween.Kill();
+			carPivotTween = null;
+			carPivot.transform.localEulerAngles = Vector3.zero;
 		}
-	}*/
+		carPivotTween = carPivot.DORotate(new Vector3(0f, 0f, 360f), 0.75f, RotateMode.LocalAxisAdd).SetEase(Ease.OutBack).OnComplete(() => {
+			carPivotTween = null;
+		});
+	}
 }

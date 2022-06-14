@@ -4,21 +4,29 @@ using UnityEngine.UI;
 
 public class MapController : MonoBehaviourSingleton<MapController> {
 
+	private const string DATA_KEY = "MAP_DATA_";
+
 	[SerializeField] private Button cameraButton = default;
 	[SerializeField] private UIPointOfInterestPanel pointOfInterestPanel = default;
 	[SerializeField] private UIConfirmRoadPanel confirmRoadPanel = default;
+	[SerializeField] private RectTransform uiLevelLockedObject = default;
 
 	[SerializeField] private NavigationController mainNavigationController = default;
 	[SerializeField] private LevelController[] levels = default;
 
+	[SerializeField] private int mapIndex = default;
+
 	public UIPointOfInterestPanel PointOfInterestPanel => pointOfInterestPanel;
 	public UIConfirmRoadPanel ConfirmRoadPanel => confirmRoadPanel;
+	public RectTransform UILevelLockedObject => uiLevelLockedObject;
 
 	private readonly List<NodeController> nodeControllers = new();
 	private readonly List<PointOfInterest> pointOfInterests = new();
 
 	private bool mainNavIsActive;
 	private float spawnTime;
+
+	private LevelData[] levelsData;
 
 	private void Start() {
 		base.Awake();
@@ -27,8 +35,10 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 			CameraController.Instance.ChangeOrto();
 		});
 
+		SetLevelsData();
+
 		for (int i = 0; i < levels.Length; i++) {
-			levels[i].Init(OnEnter);
+			levels[i].Init(OnEnter, levelsData[i].isLocked);
 			nodeControllers.Add(levels[i].GetNodeController());
 			pointOfInterests.AddRange(levels[i].GetNodeController().GetPointOfInterests());
 		}
@@ -43,7 +53,7 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 		CameraController.Instance.SetTapAction(() => {
 			StopNavigation();
 			for (int i = 0; i < levels.Length; i++) {
-				if (levels[i].TouchInputRaycast()) {
+				if (!levelsData[i].isLocked && levels[i].TouchInputRaycast()) {
 					CameraController.Instance.SetTapAction(null);
 					levels[i].OnEnter();
 					break;
@@ -77,6 +87,12 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 				TrySpawnAgent();
 			}
 		}
+
+		for (int i = 0; i < levels.Length; i++) {
+			if (levelsData[i].isLocked) {
+				levels[i].UpdateUILockedObject();
+			}
+		}
 	}
 
 	private void TrySpawnAgent() {
@@ -94,5 +110,31 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 				}
 			}
 		}
+	}
+
+	private void SetLevelsData() {
+		string key = $"{DATA_KEY}{mapIndex}";
+		if (PlayerPrefs.HasKey(key)) {
+			levelsData = Utils.Deserialize<LevelData[]>(PlayerPrefs.GetString(key));
+		} else {
+			levelsData = new LevelData[levels.Length];
+			for (int i = 0; i < levelsData.Length; i++) {
+				levelsData[i] = new() {
+					isLocked = true
+				};
+			}
+			levelsData[0].isLocked = false;
+		}
+	}
+
+	public void UnlockLevel(int levelIndex) {
+		levelsData[levelIndex].isLocked = false;
+		string key = $"{DATA_KEY}{mapIndex}";
+		PlayerPrefs.SetString(key, Utils.Serialize(levelsData));
+		PlayerPrefs.Save();
+	}
+
+	private class LevelData {
+		public bool isLocked;
 	}
 }

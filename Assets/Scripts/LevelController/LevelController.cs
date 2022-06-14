@@ -22,11 +22,31 @@ public class LevelController : MonoBehaviour {
 	private readonly List<UIPointOfInterestPanel> pointOfInterestPanels = new();
 
 	private Action onExit;
+	private GameObject lockedObject;
+	public RectTransform uiLockedObject;
 
-	public void Init(Action onExit) {
+	public void Init(Action onExit, bool isLocked) {
 		this.onExit = onExit;
 		nodeController.Init(map);
+		if (isLocked) {
+			lockedObject = Instantiate(Resources.Load<GameObject>("LevelLocked"), transform);
+		}
 		enabled = false;
+	}
+
+	public void UnlockAnim() {
+		if (lockedObject != null) {
+
+		}
+	}
+
+	public void UpdateUILockedObject() {
+		if (uiLockedObject == null) {
+			uiLockedObject = MapController.Instance.UILevelLockedObject;
+			uiLockedObject = Instantiate(uiLockedObject, uiLockedObject.transform.parent);
+			uiLockedObject.gameObject.SetActive(true);
+		}
+		uiLockedObject.anchoredPosition = Utils.WorldPositionToUI(transform.position, UIItem.MainCanvas);
 	}
 
 	public bool TouchInputRaycast() {

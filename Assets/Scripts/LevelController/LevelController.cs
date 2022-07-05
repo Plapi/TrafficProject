@@ -22,11 +22,13 @@ public class LevelController : MonoBehaviour {
 	private readonly List<UIPointOfInterestPanel> pointOfInterestPanels = new();
 
 	private Action onExit;
+	private Action<bool, int> onLevelComplete;
 	private GameObject lockedObject;
 	public RectTransform uiLockedObject;
 
-	public void Init(Action onExit, bool isLocked) {
+	public void Init(Action onExit, Action<bool, int> onLevelComplete, bool isLocked) {
 		this.onExit = onExit;
+		this.onLevelComplete = onLevelComplete;
 		nodeController.Init(map);
 		if (isLocked) {
 			lockedObject = Instantiate(Resources.Load<GameObject>("LevelLocked"), transform);
@@ -36,7 +38,10 @@ public class LevelController : MonoBehaviour {
 
 	public void UnlockAnim() {
 		if (lockedObject != null) {
-
+			Destroy(lockedObject);
+		}
+		if (uiLockedObject != null) {
+			Destroy(uiLockedObject.gameObject);
 		}
 	}
 
@@ -44,6 +49,7 @@ public class LevelController : MonoBehaviour {
 		if (uiLockedObject == null) {
 			uiLockedObject = MapController.Instance.UILevelLockedObject;
 			uiLockedObject = Instantiate(uiLockedObject, uiLockedObject.transform.parent);
+			uiLockedObject.transform.SetSiblingIndex(0);
 			uiLockedObject.gameObject.SetActive(true);
 		}
 		uiLockedObject.anchoredPosition = Utils.WorldPositionToUI(transform.position, UIItem.MainCanvas);
@@ -57,7 +63,7 @@ public class LevelController : MonoBehaviour {
 		return nodeController;
 	}
 
-	private void OnExit() {
+	public void OnExit() {
 		enabled = false;
 		ClearPointOfInterestPanels();
 		onExit?.Invoke();
@@ -124,6 +130,9 @@ public class LevelController : MonoBehaviour {
 			},
 			onFastSpeedButton = () => {
 
+			}, onTimePassed = () => {
+				StopPlayMode();
+				onLevelComplete?.Invoke(false, 0);
 			}
 		});
 
@@ -163,6 +172,7 @@ public class LevelController : MonoBehaviour {
 		pointOfInterests.ForEach(pointOfInterest => {
 			pointOfInterest.InitProgressSpawnTime();
 			pointOfInterest.CarsCountStartedWithThisDestination = 0;
+			pointOfInterest.OnCarCompleteListener = CheckLevelComplete;
 		});
 		linkedNodes.ForEach(linkedNode => {
 			if (linkedNode.IsHeadNode) {
@@ -177,8 +187,22 @@ public class LevelController : MonoBehaviour {
 		navigationController.Stop();
 		nodeController.StopIntersectionsWithSemaphores();
 		inPlayMode = false;
-		pointOfInterests.ForEach(pointOfInterest => pointOfInterest.ResetCarsProgress());
+		pointOfInterests.ForEach(pointOfInterest => pointOfInterest.ResetCar());
 		pointOfInterestPanels.ForEach(pointOfInterestPanel => pointOfInterestPanel.ResetUI());
+	}
+
+	private void CheckLevelComplete() {
+		bool levelComplete = true;
+		for (int i = 0; i < pointOfInterests.Count; i++) {
+			if (!pointOfInterests[i].IsCarComplete) {
+				levelComplete = false;
+				break;
+			}
+		}
+		if (levelComplete) {
+			StopPlayMode();
+			onLevelComplete?.Invoke(true, UIController.Instance.GetView<UIPlayModeView>().RemainingTimeInt);
+		}
 	}
 
 	private void Update() {

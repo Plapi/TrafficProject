@@ -18,6 +18,7 @@ public class PointOfInterest : MonoBehaviour {
 	private float spawnTimeProgress;
 
 	public Action OnCarEnterListener;
+	public Action OnCarCompleteListener;
 
 	public Node HeadNode => headNode;
 	public Node OtherNode => otherNode;
@@ -25,6 +26,8 @@ public class PointOfInterest : MonoBehaviour {
 	public int CarsProgress { get; private set; }
 	public int CarsTarget => carsTarget;
 	[HideInInspector] public int CarsCountStartedWithThisDestination;
+
+	public bool IsCarComplete => CarsProgress >= CarsTarget;
 
 	public bool IntersectRestrictedArea(Node node0, Node node1) {
 		return restrictedArea.IntersectConnexion(node0, node1);
@@ -63,10 +66,15 @@ public class PointOfInterest : MonoBehaviour {
 	public void OnCarEnter() {
 		CarsProgress++;
 		OnCarEnterListener?.Invoke();
+		if (CarsProgress == CarsTarget) {
+			OnCarCompleteListener?.Invoke();
+		}
 	}
 
-	public void ResetCarsProgress() {
+	public void ResetCar() {
 		CarsProgress = 0;
+		OnCarEnterListener = null;
+		OnCarCompleteListener = null;
 	}
 
 #if UNITY_EDITOR

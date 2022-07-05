@@ -27,9 +27,9 @@ public class UIController : MonoBehaviourSingleton<UIController> {
 		return view;
 	}
 
-	public T InitAndShowView<T>(IUIViewData data) where T : UIViewBase {
+	public T InitAndShowView<T>(IUIViewData data, Action onComplete = null) where T : UIViewBase {
 		T view = GetView<T>();
-		ShowView(view);
+		ShowView(view, onComplete);
 		view.Init(data);
 		return view;
 	}
@@ -58,6 +58,20 @@ public class UIController : MonoBehaviourSingleton<UIController> {
 				currentView.gameObject.SetActive(true);
 			}
 		}
+	}
+
+	public void PopInstantView<T>() where T : UIViewBase {
+		List<UIViewBase> list = new();
+		while (openViews.Count > 0) {
+			UIViewBase view = openViews.Pop();
+			if (view is T) {
+				break;
+			}
+			list.Add(view);
+		}
+		list.ForEach(item => {
+			openViews.Push(item);
+		});
 	}
 
 	public UIViewBase GetCurrentView() {

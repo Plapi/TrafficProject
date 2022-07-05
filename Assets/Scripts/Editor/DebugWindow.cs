@@ -43,6 +43,10 @@ public class DebugWindow : EditorWindow {
 			}
 		}
 
+		if (GUILayout.Button("Delete Levels Data")) {
+			FindObjectOfType<MapController>().DeleteLevelsData();
+		}
+
 		if (GUILayout.Button("Create Level Borders")) {
 			LevelController[] levels = FindObjectsOfType<LevelController>();
 			for (int i = 0; i < levels.Length; i++) {
@@ -51,7 +55,11 @@ public class DebugWindow : EditorWindow {
 		}
 
 		if (GUILayout.Button("Test")) {
-
+			UIController.Instance.InitAndShowView<UILevelCompleteView>(new UILevelCompleteView.Data {
+				onContinue = () => {
+					UIController.Instance.HideCurrentView();
+				}
+			});
 		}
 
 		EditorGUILayout.EndScrollView();

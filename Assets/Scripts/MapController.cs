@@ -38,7 +38,10 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 		SetLevelsData();
 
 		for (int i = 0; i < levels.Length; i++) {
-			levels[i].Init(OnEnter, levelsData[i].isLocked);
+			int levelIndex = i;
+			levels[i].Init(OnEnter, (bool complete, int time) => {
+				OnLevelComplete(levelIndex, complete, time);
+			}, levelsData[i].isLocked);
 			nodeControllers.Add(levels[i].GetNodeController());
 			pointOfInterests.AddRange(levels[i].GetNodeController().GetPointOfInterests());
 		}
@@ -51,15 +54,43 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 	private void OnEnter() {
 		StartNavigation();
 		CameraController.Instance.SetTapAction(() => {
-			StopNavigation();
 			for (int i = 0; i < levels.Length; i++) {
 				if (!levelsData[i].isLocked && levels[i].TouchInputRaycast()) {
 					CameraController.Instance.SetTapAction(null);
+					StopNavigation();
 					levels[i].OnEnter();
 					break;
 				}
 			}
 		});
+	}
+
+	private void OnLevelComplete(int levelIndex, bool complete, int time) {
+		UIController.Instance.InitAndShowView<UILevelCompleteView>(new UILevelCompleteView.Data {
+			complete = complete,
+			time = time,
+			onContinue = () => {
+				UIController.Instance.HideCurrentView(() => {
+					if (complete) {
+						levels[levelIndex].OnExit();
+					}
+				});
+				if (complete) {
+					if (levelIndex + 1 < levels.Length) {
+						UnlockLevel(levelIndex + 1);
+						levels[levelIndex + 1].UnlockAnim();
+					} else {
+						Debug.LogError("Map complete!");
+					}
+				}
+			}
+		}, () => {
+			UIController.Instance.PopInstantView<UIPlayModeView>();
+			if (complete) {
+				UIController.Instance.PopInstantView<UILevelView>();
+			}
+		});
+		cameraButton.gameObject.SetActive(false);
 	}
 
 	private void StartNavigation() {
@@ -127,10 +158,16 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 		}
 	}
 
-	public void UnlockLevel(int levelIndex) {
+	private void UnlockLevel(int levelIndex) {
 		levelsData[levelIndex].isLocked = false;
 		string key = $"{DATA_KEY}{mapIndex}";
 		PlayerPrefs.SetString(key, Utils.Serialize(levelsData));
+		PlayerPrefs.Save();
+	}
+
+	public void DeleteLevelsData() {
+		string key = $"{DATA_KEY}{mapIndex}";
+		PlayerPrefs.DeleteKey(key);
 		PlayerPrefs.Save();
 	}
 

@@ -83,6 +83,7 @@ public class MapController : MonoBehaviourSingleton<MapController> {
 						Debug.LogError("Map complete!");
 					}
 				}
+				cameraButton.gameObject.SetActive(true);
 			}
 		}, () => {
 			UIController.Instance.PopInstantView<UIPlayModeView>();

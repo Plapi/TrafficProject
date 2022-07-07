@@ -40,7 +40,7 @@ public class NavigationController : MonoBehaviour {
 				bool allow = nodeControllers.Count > 1 || nodeController.GetAllNodes().Contains(n0) &&
 					nodeController.GetAllNodes().Contains(n1);
 
-				if (allow && !alreadyProcessedConnexions.ContainsKey(n0n1Name) && !alreadyProcessedConnexions.ContainsKey(n1n0Name)) {
+				if (allow && n0n1Name != n1n0Name && !alreadyProcessedConnexions.ContainsKey(n0n1Name) && !alreadyProcessedConnexions.ContainsKey(n1n0Name)) {
 
 					alreadyProcessedConnexions.Add(n0n1Name, null);
 					alreadyProcessedConnexions.Add(n1n0Name, null);

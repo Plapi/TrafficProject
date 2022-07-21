@@ -145,13 +145,11 @@ PlayerSettings:
     enable360StereoCapture: 0
   isWsaHolographicRemotingEnabled: 0
   enableFrameTimingStats: 0
-  enableOpenGLProfilerGPURecorders: 1
   useHDRDisplay: 0
   D3DHDRBitDepth: 0
   m_ColorGamuts: 00000000
   targetPixelDensity: 30
   resolutionScalingMode: 0
-  resetResolutionOnWindowResize: 0
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
@@ -800,7 +798,23 @@ PlayerSettings:
   webGLLinkerTarget: 1
   webGLThreadsSupport: 0
   webGLDecompressionFallback: 0
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    Android: URP_OUTLINE
+    CloudRendering: EPO_DOTWEEN;URP_OUTLINE
+    EmbeddedLinux: EPO_DOTWEEN;URP_OUTLINE
+    GameCoreScarlett: EPO_DOTWEEN;URP_OUTLINE
+    GameCoreXboxOne: EPO_DOTWEEN;URP_OUTLINE
+    Lumin: EPO_DOTWEEN;URP_OUTLINE
+    Nintendo Switch: EPO_DOTWEEN;URP_OUTLINE
+    PS4: EPO_DOTWEEN;URP_OUTLINE
+    PS5: EPO_DOTWEEN;URP_OUTLINE
+    Stadia: EPO_DOTWEEN;URP_OUTLINE
+    Standalone: EPO_DOTWEEN;URP_OUTLINE
+    WebGL: EPO_DOTWEEN;URP_OUTLINE
+    Windows Store Apps: EPO_DOTWEEN;URP_OUTLINE
+    XboxOne: EPO_DOTWEEN;URP_OUTLINE
+    iPhone: EPO_DOTWEEN;URP_OUTLINE
+    tvOS: EPO_DOTWEEN;URP_OUTLINE
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend: {}
@@ -845,7 +859,6 @@ PlayerSettings:
   metroFTAName: 
   metroFTAFileTypes: []
   metroProtocolName: 
-  vcxProjDefaultLanguage: 
   XboxOneProductId: 
   XboxOneUpdateKey: 
   XboxOneSandboxId: 
